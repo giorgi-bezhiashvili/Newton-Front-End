@@ -11,7 +11,7 @@ export default function FormulasPage() {
 
   return (
     <>
-      <title>ფორმულები — Newton</title>
+      <title>ფორმულები - Newton</title>
       <meta
         name="description"
         content="ფიზიკის ფორმულების კრებული კლასების მიხედვით."

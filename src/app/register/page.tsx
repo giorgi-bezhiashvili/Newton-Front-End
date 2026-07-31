@@ -39,6 +39,12 @@ function RegisterPage() {
   };
 
   return (
+    <>
+    <title>რეგისტრაცია - Newton</title>
+      <meta
+        name="description"
+        content="რეგისტრაციის გვერდი პლატფორმა ნიუტონისთვის, რომელიც საშუალებას აძლევს მომხმარებლებს შექმნან ანგარიში სერიისთვის, რესურსების, ქვიზებისა და ფორმულების შესანახად."
+      />
     <div className="space-page">
       <Header />
       <main className="mainContent authContent">
@@ -113,6 +119,7 @@ function RegisterPage() {
       </main>
       <Footer />
     </div>
+    </>
   );
 }
 

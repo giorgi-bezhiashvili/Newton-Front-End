@@ -8,7 +8,7 @@ import type { FormulaData } from "../types";
 const GRADES = [7, 8, 9, 10, 11, 12];
 
 export function AddFormulaForm({ onAdded }: { onAdded: () => void }) {
-  const { auth, setAccessToken, logout } = useAuth();
+  const { auth, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [topic, setTopic] = useState("");
   const [equationText, setEquationText] = useState("");
@@ -44,19 +44,17 @@ export function AddFormulaForm({ onAdded }: { onAdded: () => void }) {
 
     setIsSubmitting(true);
     try {
-      await postWithAuth<FormulaData>(
-        "formulas",
-        auth.accessToken,
-        {
-          topic,
-          equation,
-          grade,
-          url: url || undefined,
-          urlName: urlName || undefined,
-        },
-        auth.refreshToken,
-        setAccessToken
-      );
+
+await postWithAuth<FormulaData>(
+  "formulas",
+  {
+    topic,
+    equation,
+    grade,
+    url: url || undefined,
+    urlName: urlName || undefined,
+  }
+);
       resetForm();
       setIsOpen(false);
       onAdded();

@@ -9,7 +9,7 @@ import { StarButton } from "./StarButton";
 const GRADES = [7, 8, 9, 10, 11, 12];
 
 export function ProjectCard({ card, onChanged }: { card: ProjectData; onChanged?: () => void }) {
-  const { auth, setAccessToken, logout } = useAuth();
+  const { auth, logout } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [topic, setTopic] = useState(card.topic);
   const [description, setDescription] = useState(card.description);
@@ -25,19 +25,16 @@ export function ProjectCard({ card, onChanged }: { card: ProjectData; onChanged?
     setIsSaving(true);
     try {
       await patchWithAuth(
-        `projects/${card._id}`,
-        auth!.accessToken,
-        {
-          topic,
-          description,
-          projectAuthor: projectAuthor || undefined,
-          grade,
-          url: url || undefined,
-          urlName: urlName || undefined,
-        },
-        auth!.refreshToken,
-        setAccessToken
-      );
+  `projects/${card._id}`,
+  {
+    topic,
+    description,
+    projectAuthor: projectAuthor || undefined,
+    grade,
+    url: url || undefined,
+    urlName: urlName || undefined,
+  }
+);
       setIsEditing(false);
       onChanged?.();
     } catch (err) {
@@ -50,12 +47,11 @@ export function ProjectCard({ card, onChanged }: { card: ProjectData; onChanged?
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("წავშალო ეს პროექტი?")) return;
+    if (!window.confirm("წავშალო ეს რესურსი?")) return;
     setError(null);
     setIsSaving(true);
     try {
-      await deleteWithAuth(`projects/${card._id}`, auth!.accessToken, auth!.refreshToken, setAccessToken);
-      onChanged?.();
+await deleteWithAuth(`projects/${card._id}`);      onChanged?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : "წაშლა ვერ მოხერხდა";
       if (message.includes("სესია ამოიწურა")) logout();
@@ -83,7 +79,7 @@ if (auth?.role === "teacher" && isEditing) {
           />
           <input
             className="searchInput"
-            placeholder="ავტორი (არასავალდებულო)"
+            placeholder="ავტორი"
             value={projectAuthor}
             onChange={(e) => setProjectAuthor(e.target.value)}
           />

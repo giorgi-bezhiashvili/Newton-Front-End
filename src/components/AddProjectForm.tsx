@@ -8,7 +8,7 @@ import type { ProjectData } from "../types";
 const GRADES = [7, 8, 9, 10, 11, 12];
 
 export function AddProjectForm({ onAdded }: { onAdded: () => void }) {
-  const { auth, setAccessToken, logout } = useAuth();
+  const { auth, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [topic, setTopic] = useState("");
   const [description, setDescription] = useState("");
@@ -36,19 +36,16 @@ export function AddProjectForm({ onAdded }: { onAdded: () => void }) {
     setIsSubmitting(true);
     try {
       await postWithAuth<ProjectData>(
-        "projects",
-        auth.accessToken,
-        {
-          topic,
-          description,
-          projectAuthor: projectAuthor || undefined,
-          grade,
-          url: url || undefined,
-          urlName: urlName || undefined,
-        },
-        auth.refreshToken,
-        setAccessToken
-      );
+  "projects",
+  {
+    topic,
+    description,
+    projectAuthor: projectAuthor || undefined,
+    grade,
+    url: url || undefined,
+    urlName: urlName || undefined,
+  }
+);
       resetForm();
       setIsOpen(false);
       onAdded();
@@ -64,7 +61,7 @@ export function AddProjectForm({ onAdded }: { onAdded: () => void }) {
   return (
     <div className="addCardWrapper">
       <button type="button" className="addCardToggle" onClick={() => setIsOpen((v) => !v)}>
-        {isOpen ? "დახურვა" : "+ ახალი პროექტის დამატება"}
+        {isOpen ? "დახურვა" : "+ ახალი რესურსის დამატება"}
       </button>
 
       {isOpen && (
@@ -82,7 +79,7 @@ export function AddProjectForm({ onAdded }: { onAdded: () => void }) {
           </div>
 
           <div className="addCardRow">
-            <input className="searchInput" placeholder="ბმული (არასავალდებულო)" value={url} onChange={(e) => setUrl(e.target.value)} />
+            <input className="searchInput" placeholder="ბმული" value={url} onChange={(e) => setUrl(e.target.value)} />
             <input className="searchInput" placeholder="ბმულის სახელი" value={urlName} onChange={(e) => setUrlName(e.target.value)} />
           </div>
 

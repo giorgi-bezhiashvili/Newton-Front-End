@@ -1,31 +1,61 @@
-export const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "https://newton-theta-bice.vercel.app/api";
+// Defaults to the same-origin proxy defined in next.config.ts (see the
+// rewrites() comment there for why: it keeps auth cookies first-party).
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
 
-// Full-page navigation target for "Continue with Google" — the browser
-// goes here directly, it's never called via fetch().
+// Routed through the same-origin proxy (see rewrites() in next.config.ts)
+// so that when Google redirects back to /api/auth/google/callback, the
+// backend's Set-Cookie lands on this frontend's own domain — not on the
+// backend's domain, where later same-origin API calls would never see it.
+// IMPORTANT: this only works if GOOGLE_CALLBACK_URL (backend env var) and
+// the Authorized redirect URI in the Google Cloud Console both point at
+// https://<this-frontend-domain>/api/auth/google/callback — not the
+// backend's own domain.
 export const GOOGLE_LOGIN_URL = `${API_BASE}/auth/google`;
 
 export interface LoginResponse {
   message: string;
-  accessToken: string;
-  refreshToken: string;
+  userName: string;
   role: string;
 }
 
 interface RefreshResponse {
-  accessToken: string;
-  refreshToken: string;
+  userName: string;
   role: string;
+}
+
+// Reads the CSRF token the backend hands out (as a non-httpOnly cookie)
+// alongside the httpOnly auth cookies.
+function getCsrfToken(): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(/(?:^|;\s*)csrfToken=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+async function apiFetch(endpoint: string, options: RequestInit = {}): Promise<Response> {
+  const method = (options.method ?? "GET").toUpperCase();
+  const headers = new Headers(options.headers);
+  if (!headers.has("Content-Type") && options.body !== undefined) {
+    headers.set("Content-Type", "application/json");
+  }
+  if (method !== "GET" && method !== "HEAD") {
+    const csrfToken = getCsrfToken();
+    if (csrfToken) headers.set("X-CSRF-Token", csrfToken);
+  }
+
+  return fetch(`${API_BASE}/${endpoint}`, {
+    ...options,
+    method,
+    headers,
+    credentials: "include",
+  });
 }
 
 export async function loginRequest(
   userName: string,
   password: string
 ): Promise<LoginResponse> {
-  const response = await fetch(`${API_BASE}/auth/login`, {
+  const response = await apiFetch("auth/login", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ identifier: userName, password }),
   });
 
@@ -48,9 +78,8 @@ export interface RegisterBody {
 export async function registerRequest(
   data: RegisterBody
 ): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE}/auth/register`, {
+  const response = await apiFetch("auth/register", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
 
@@ -65,9 +94,8 @@ export async function registerRequest(
 export async function forgotPasswordRequest(
   email: string
 ): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE}/auth/forgot-password`, {
+  const response = await apiFetch("auth/forgot-password", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
   });
 
@@ -82,9 +110,8 @@ export async function resetPasswordRequest(
   token: string,
   password: string
 ): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE}/auth/reset-password`, {
+  const response = await apiFetch("auth/reset-password", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ token, password }),
   });
 
@@ -96,34 +123,20 @@ export async function resetPasswordRequest(
   return response.json();
 }
 
-export async function logoutRequest(refreshToken: string): Promise<void> {
+export async function logoutRequest(): Promise<void> {
   try {
-    await fetch(`${API_BASE}/auth/logout`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: refreshToken }),
-    });
+    await apiFetch("auth/logout", { method: "DELETE" });
   } catch {
     // best-effort — local logout still proceeds even if this fails
   }
 }
 
-// Shared across all callers so that concurrent requests (e.g. /saved and
-// /streak firing around the same time) which each hit a 401/403 don't each
-// submit the same refresh token — the backend only allows a refresh token to
-// be redeemed once, so a genuine second submission gets a 429 telling the
-// loser to retry. Deduping here means only one network call ever goes out;
-// everyone else just awaits it.
 let refreshInFlight: Promise<RefreshResponse> | null = null;
 
-async function refreshTokens(refreshToken: string): Promise<RefreshResponse> {
+async function refreshSession(): Promise<RefreshResponse> {
   if (!refreshInFlight) {
     refreshInFlight = (async () => {
-      const response = await fetch(`${API_BASE}/auth/token`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: refreshToken }),
-      });
+      const response = await apiFetch("auth/token", { method: "POST" });
 
       if (!response.ok) {
         throw new Error("სესია ამოიწურა, გთხოვთ თავიდან შეხვიდეთ სისტემაში");
@@ -138,37 +151,31 @@ async function refreshTokens(refreshToken: string): Promise<RefreshResponse> {
   return refreshInFlight;
 }
 
-// Sends a resource with an access token using the given HTTP method. If the
-// token has expired (401/403), it transparently refreshes once and retries.
+export async function tryRestoreSession(): Promise<RefreshResponse | null> {
+  try {
+    return await refreshSession();
+  } catch {
+    return null;
+  }
+}
+
 async function sendWithAuth<T>(
   method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE",
   endpoint: string,
-  accessToken: string,
-  body?: unknown,
-  refreshToken?: string,
-  onTokenRefreshed?: (
-    newAccessToken: string,
-    newRefreshToken: string,
-    role: string
-  ) => void
+  body?: unknown
 ): Promise<T> {
-  const send = (token: string) =>
-    fetch(`${API_BASE}/${endpoint}`, {
+  const send = () =>
+    apiFetch(endpoint, {
       method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
 
-  let response = await send(accessToken);
+  let response = await send();
 
-  if ((response.status === 401 || response.status === 403) && refreshToken) {
+  if (response.status === 401 || response.status === 403) {
     try {
-      const tokens = await refreshTokens(refreshToken);
-      onTokenRefreshed?.(tokens.accessToken, tokens.refreshToken, tokens.role);
-      response = await send(tokens.accessToken);
+      await refreshSession();
+      response = await send();
     } catch {
       throw new Error("სესია ამოიწურა, გთხოვთ თავიდან შეხვიდეთ სისტემაში");
     }
@@ -186,110 +193,25 @@ async function sendWithAuth<T>(
   return response.json();
 }
 
-export function getWithAuth<T>(
-  endpoint: string,
-  accessToken: string,
-  refreshToken?: string,
-  onTokenRefreshed?: (
-    newAccessToken: string,
-    newRefreshToken: string,
-    role: string
-  ) => void
-): Promise<T> {
-  return sendWithAuth<T>(
-    "GET",
-    endpoint,
-    accessToken,
-    undefined,
-    refreshToken,
-    onTokenRefreshed
-  );
+export function getWithAuth<T>(endpoint: string): Promise<T> {
+  return sendWithAuth<T>("GET", endpoint);
 }
 
-export function postWithAuth<T>(
-  endpoint: string,
-  accessToken: string,
-  body: unknown,
-  refreshToken?: string,
-  onTokenRefreshed?: (
-    newAccessToken: string,
-    newRefreshToken: string,
-    role: string
-  ) => void
-): Promise<T> {
-  return sendWithAuth<T>(
-    "POST",
-    endpoint,
-    accessToken,
-    body,
-    refreshToken,
-    onTokenRefreshed
-  );
+export function postWithAuth<T>(endpoint: string, body?: unknown): Promise<T> {
+  return sendWithAuth<T>("POST", endpoint, body);
 }
 
-export function patchWithAuth<T>(
-  endpoint: string,
-  accessToken: string,
-  body: unknown,
-  refreshToken?: string,
-  onTokenRefreshed?: (
-    newAccessToken: string,
-    newRefreshToken: string,
-    role: string
-  ) => void
-): Promise<T> {
-  return sendWithAuth<T>(
-    "PATCH",
-    endpoint,
-    accessToken,
-    body,
-    refreshToken,
-    onTokenRefreshed
-  );
+export function patchWithAuth<T>(endpoint: string, body?: unknown): Promise<T> {
+  return sendWithAuth<T>("PATCH", endpoint, body);
 }
 
-export function putWithAuth<T>(
-  endpoint: string,
-  accessToken: string,
-  body?: unknown,
-  refreshToken?: string,
-  onTokenRefreshed?: (
-    newAccessToken: string,
-    newRefreshToken: string,
-    role: string
-  ) => void
-): Promise<T> {
-  return sendWithAuth<T>(
-    "PUT",
-    endpoint,
-    accessToken,
-    body,
-    refreshToken,
-    onTokenRefreshed
-  );
+export function putWithAuth<T>(endpoint: string, body?: unknown): Promise<T> {
+  return sendWithAuth<T>("PUT", endpoint, body);
 }
 
-export function deleteWithAuth<T>(
-  endpoint: string,
-  accessToken: string,
-  refreshToken?: string,
-  onTokenRefreshed?: (
-    newAccessToken: string,
-    newRefreshToken: string,
-    role: string
-  ) => void
-): Promise<T> {
-  return sendWithAuth<T>(
-    "DELETE",
-    endpoint,
-    accessToken,
-    undefined,
-    refreshToken,
-    onTokenRefreshed
-  );
+export function deleteWithAuth<T>(endpoint: string): Promise<T> {
+  return sendWithAuth<T>("DELETE", endpoint);
 }
-
-// --- Quiz API Helpers ---
 
 export interface CheckAnswerResponse {
   correct: boolean;
@@ -297,15 +219,12 @@ export interface CheckAnswerResponse {
   explanation: string;
 }
 
-// Deliberately does not require auth — quizzes can be taken while logged
-// out, and this is the only endpoint allowed to reveal realAnswer.
 export async function checkQuizAnswer(
   quizId: string,
   answer: string
 ): Promise<CheckAnswerResponse> {
-  const response = await fetch(`${API_BASE}/quiz/${quizId}/check`, {
+  const response = await apiFetch(`quiz/${quizId}/check`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ answer }),
   });
 
@@ -316,44 +235,10 @@ export async function checkQuizAnswer(
   return response.json();
 }
 
-/**
- * Marks a quiz as completed in the user's MongoDB record using standard auth headers.
- */
-export function markQuizDone(
-  quizId: string,
-  accessToken: string,
-  refreshToken?: string,
-  onTokenRefreshed?: (
-    newAccessToken: string,
-    newRefreshToken: string,
-    role: string
-  ) => void
-) {
-  return putWithAuth<{ message: string }>(
-    `quiz/${quizId}`,
-    accessToken,
-    undefined,
-    refreshToken,
-    onTokenRefreshed
-  );
+export function markQuizDone(quizId: string) {
+  return putWithAuth<{ message: string }>(`quiz/${quizId}`);
 }
 
-/**
- * Fetches all completed quizzes for the logged in user.
- */
-export function fetchDoneQuizzes(
-  accessToken: string,
-  refreshToken?: string,
-  onTokenRefreshed?: (
-    newAccessToken: string,
-    newRefreshToken: string,
-    role: string
-  ) => void
-) {
-  return getWithAuth<{ _id: string }[]>(
-    "quiz/done",
-    accessToken,
-    refreshToken,
-    onTokenRefreshed
-  );
+export function fetchDoneQuizzes() {
+  return getWithAuth<{ _id: string }[]>("quiz/done");
 }

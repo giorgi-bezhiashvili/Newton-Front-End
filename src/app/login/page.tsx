@@ -32,6 +32,8 @@ function LoginPage() {
   };
 
   return (
+    <>
+    
     <div className="space-page">
       <Header />
       <main className="mainContent authContent">
@@ -135,6 +137,7 @@ function LoginPage() {
       </main>
       <Footer />
     </div>
+  </>
   );
 }
 

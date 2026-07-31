@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useAuth } from "../contexts/AuthContext";
 import { fetchDailyStreak } from "../utils/streak";
 
-function Middle() {
-  const { auth, setAccessToken } = useAuth();
+export default function Middle() {
+  const { auth } = useAuth();
   const [dailyStreak, setDailyStreak] = useState(0);
 
   useEffect(() => {
@@ -14,10 +14,11 @@ function Middle() {
       setDailyStreak(0);
       return;
     }
-    fetchDailyStreak(auth.accessToken, auth.refreshToken, setAccessToken)
+    fetchDailyStreak()
       .then(setDailyStreak)
       .catch(() => setDailyStreak(0));
-  }, [auth, setAccessToken]);
+  }, [auth]);
+
   return (
     <main>
       {/* The Hero Banner directly below the nav header */}
@@ -141,4 +142,3 @@ function Middle() {
     </main>
   );
 }
-export default Middle;

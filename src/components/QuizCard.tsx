@@ -21,7 +21,7 @@ export function QuizCard({
   onNext: () => void;
   onAnswered: (correct: boolean) => void;
 }) {
-  const { auth, setAccessToken, logout } = useAuth();
+  const { auth, logout } = useAuth();
   const isMultipleChoice = card.answers.length > 1;
 
   // --- quiz-taking state ---
@@ -30,7 +30,7 @@ export function QuizCard({
   const [submitted, setSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
-  
+
   // Dynamic state populated from server response
   const [revealedRealAnswer, setRevealedRealAnswer] = useState<string>("");
   const [revealedExplanation, setRevealedExplanation] = useState<string>("");
@@ -108,13 +108,16 @@ export function QuizCard({
     const answers = answersText.split("\n").map((l) => l.trim()).filter(Boolean);
     setIsSaving(true);
     try {
-      await patchWithAuth(
-        `quiz/${card._id}`,
-        auth!.accessToken,
-        { topic, assignment, answers, realAnswer, grade, explanation, url: url || undefined, urlName: urlName || undefined },
-        auth!.refreshToken,
-        setAccessToken
-      );
+      await patchWithAuth(`quiz/${card._id}`, {
+        topic,
+        assignment,
+        answers,
+        realAnswer,
+        grade,
+        explanation,
+        url: url || undefined,
+        urlName: urlName || undefined,
+      });
       setIsEditing(false);
       onChanged?.();
     } catch (err) {
@@ -131,7 +134,7 @@ export function QuizCard({
     setError(null);
     setIsSaving(true);
     try {
-      await deleteWithAuth(`quiz/${card._id}`, auth!.accessToken, auth!.refreshToken, setAccessToken);
+      await deleteWithAuth(`quiz/${card._id}`);
       onChanged?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : "წაშლა ვერ მოხერხდა";

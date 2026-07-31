@@ -30,7 +30,7 @@ function emptyIds(): Record<SavedItemType, Set<string>> {
 const SavedContext = createContext<SavedContextValue | undefined>(undefined);
 
 export function SavedProvider({ children }: { children: ReactNode }) {
-  const { auth, setAccessToken, logout } = useAuth();
+  const { auth, logout } = useAuth();
   const [savedIds, setSavedIds] = useState<Record<SavedItemType, Set<string>>>(emptyIds);
   const [savedData, setSavedData] = useState<SavedResponse>(emptyData);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +43,7 @@ export function SavedProvider({ children }: { children: ReactNode }) {
     }
     setIsLoading(true);
     try {
-      const data = await getWithAuth<SavedResponse>("saved", auth.accessToken, auth.refreshToken, setAccessToken);
+      const data = await getWithAuth<SavedResponse>("saved");
       setSavedData(data);
       setSavedIds({
         formula: new Set(data.formulas.map((f) => f._id)),
@@ -57,7 +57,7 @@ export function SavedProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth, setAccessToken]);
+  }, [auth]);
 
   useEffect(() => {
     refetchSaved();
@@ -84,9 +84,9 @@ export function SavedProvider({ children }: { children: ReactNode }) {
 
       try {
         if (currentlySaved) {
-          await deleteWithAuth(`saved/${itemType}/${itemId}`, auth.accessToken, auth.refreshToken, setAccessToken);
+          await deleteWithAuth(`saved/${itemType}/${itemId}`);
         } else {
-          await postWithAuth("saved", auth.accessToken, { itemType, itemId }, auth.refreshToken, setAccessToken);
+          await postWithAuth("saved", { itemType, itemId });
         }
         await refetchSaved();
       } catch (err) {
@@ -101,7 +101,7 @@ export function SavedProvider({ children }: { children: ReactNode }) {
         if (message.includes("სესია ამოიწურა")) logout();
       }
     },
-    [auth, savedIds, setAccessToken, refetchSaved, logout]
+    [auth, savedIds, refetchSaved, logout]
   );
 
   return (

@@ -9,6 +9,11 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
+    <title>შესახებ - Newton</title>
+      <meta
+        name="description"
+        content="პლატფორმა ნიუტონის შესახებ, მისი მიზნები და კონფიდენციალურობის პოლიტიკა"
+      />
       <Header />
       <main className="container" style={{ paddingTop: "48px" }}>
         <div>

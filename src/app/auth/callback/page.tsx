@@ -7,9 +7,8 @@ import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 import { useAuth } from "../../../contexts/AuthContext";
 
-
 function GoogleCallbackPage() {
-  const { loginWithTokens } = useAuth();
+  const { setUser } = useAuth();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const handled = useRef(false);
@@ -18,25 +17,20 @@ function GoogleCallbackPage() {
     if (handled.current) return;
     handled.current = true;
 
-    const rawHash = window.location.hash.startsWith("#")
-      ? window.location.hash.slice(1)
-      : window.location.hash;
-    const params = new URLSearchParams(rawHash);
+    const params = new URLSearchParams(window.location.search);
 
-    const accessToken = params.get("accessToken");
-    const refreshToken = params.get("refreshToken");
     const role = params.get("role");
     const userName = params.get("userName");
 
-    if (!accessToken || !refreshToken || !role || !userName) {
+    if (!role || !userName) {
       setError("Google-ით შესვლა ვერ მოხერხდა");
       return;
     }
 
-    loginWithTokens(userName, accessToken, refreshToken, role);
+    setUser(userName, role);
     window.history.replaceState(null, "", "/auth/callback");
     router.replace("/");
-  }, [loginWithTokens, router]);
+  }, [setUser, router]);
 
   if (!error) return null;
 

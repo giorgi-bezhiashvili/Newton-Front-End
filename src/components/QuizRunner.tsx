@@ -13,8 +13,30 @@ const ANIMATION_MS = 350;
 
 type ViewMode = "new" | "completed";
 
+function QuizCardSkeleton() {
+  return (
+    <div className="card quizCard cardSkeleton">
+      <div>
+        <div className="skeletonLine skeletonTag" style={{ marginBottom: 20 }} />
+        <div className="skeletonLine skeletonTitle" />
+        <div className="skeletonLine" />
+        <div className="skeletonLine skeletonShort" />
+        <div className="skeletonAnswerGrid">
+          <div className="skeletonAnswerBtn" />
+          <div className="skeletonAnswerBtn" />
+          <div className="skeletonAnswerBtn" />
+          <div className="skeletonAnswerBtn" />
+        </div>
+      </div>
+      <div className="cardFooter">
+        <div className="skeletonLine skeletonTag" />
+      </div>
+    </div>
+  );
+}
+
 export function QuizRunner() {
-  const { auth, setAccessToken } = useAuth();
+  const { auth } = useAuth();
   const [quizzes, setQuizzes] = useState<QuizData[]>([]);
   const [doneQuizIds, setDoneQuizIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
@@ -34,22 +56,22 @@ export function QuizRunner() {
 
   // Load user completed quizzes and streak data
   useEffect(() => {
-    if (!auth?.accessToken) {
+    if (!auth) {
       setDoneQuizIds(new Set());
       return;
     }
 
-    fetchDoneQuizzes(auth.accessToken, auth.refreshToken, setAccessToken)
+    fetchDoneQuizzes()
       .then((doneQuizzes) => {
         const ids = new Set(doneQuizzes.map((q) => q._id));
         setDoneQuizIds(ids);
       })
       .catch((err) => console.error("Error loading completed quizzes:", err));
 
-    fetchDailyStreak(auth.accessToken, auth.refreshToken, setAccessToken)
+    fetchDailyStreak()
       .then(setDailyStreak)
       .catch(() => {});
-  }, [auth, setAccessToken]);
+  }, [auth]);
 
   const fetchQuizzes = async () => {
     try {
@@ -115,12 +137,12 @@ export function QuizRunner() {
       });
 
       if (auth) {
-        recordDailyStreakHit(auth.accessToken, auth.refreshToken, setAccessToken)
+        recordDailyStreakHit()
           .then(setDailyStreak)
           .catch(() => {});
       }
     },
-    [auth, setAccessToken]
+    [auth]
   );
 
   const handleNext = () => {
@@ -150,10 +172,6 @@ export function QuizRunner() {
     setSessionStreak(0);
     setBestSessionStreak(0);
   };
-
-  if (isLoading) {
-    return <div className="quizLoading">იტვირთება...</div>;
-  }
 
   return (
     <div className="quizRunnerWrapper">
@@ -199,10 +217,13 @@ export function QuizRunner() {
           placeholder="ძებნა ქვიზებში (მაგ: თემა, კლასი)..."
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
+          disabled={isLoading}
         />
       </div>
 
-      {filteredQuizzes.length === 0 ? (
+      {isLoading ? (
+        <QuizCardSkeleton />
+      ) : filteredQuizzes.length === 0 ? (
         <div className="noResults">
           <p>
             {viewMode === "completed"

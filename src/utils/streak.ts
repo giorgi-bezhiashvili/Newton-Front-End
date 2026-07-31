@@ -5,22 +5,12 @@ interface StreakResponse {
   lastLogin: string | null;
 }
 
-/** Fetches the current daily streak for the logged-in user without changing it. */
-export async function fetchDailyStreak(
-  accessToken: string,
-  refreshToken: string,
-  onTokenRefreshed: (accessToken: string, refreshToken: string, role: string) => void
-): Promise<number> {
-  const data = await getWithAuth<StreakResponse>("streak", accessToken, refreshToken, onTokenRefreshed);
+export async function fetchDailyStreak(): Promise<number> {
+  const data = await getWithAuth<StreakResponse>("streak");
   return data.streak;
 }
 
-/** Call when the user answers a quiz question. The backend only increments once per calendar day. */
-export async function recordDailyStreakHit(
-  accessToken: string,
-  refreshToken: string,
-  onTokenRefreshed: (accessToken: string, refreshToken: string, role: string) => void
-): Promise<number> {
-  const data = await postWithAuth<StreakResponse>("streak/update-streak", accessToken, {}, refreshToken, onTokenRefreshed);
+export async function recordDailyStreakHit(): Promise<number> {
+  const data = await postWithAuth<StreakResponse>("streak/update-streak", {});
   return data.streak;
 }

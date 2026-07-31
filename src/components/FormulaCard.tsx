@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormulaData } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import { patchWithAuth, deleteWithAuth } from "../api";
@@ -26,17 +26,43 @@ function RenderFactor({ token }: { token: string }) {
   if (token.includes("/")) {
     const [numerator, denominator] = token.split("/");
     return (
-      <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", verticalAlign: "middle", padding: "0 6px", minWidth: "50px" }}>
-        <span style={{ borderBottom: "1px solid currentColor", padding: "2px 6px", fontSize: "0.95em", textAlign: "center", width: "100%" }}>
+      <span
+        style={{
+          display: "inline-flex",
+          flexDirection: "column",
+          alignItems: "center",
+          verticalAlign: "middle",
+          padding: "0 6px",
+          minWidth: "50px",
+        }}
+      >
+        <span
+          style={{
+            borderBottom: "1px solid currentColor",
+            padding: "2px 6px",
+            fontSize: "0.95em",
+            textAlign: "center",
+            width: "100%",
+          }}
+        >
           {formatMultiplication(numerator)}
         </span>
-        <span style={{ fontSize: "0.95em", paddingTop: "4px", textAlign: "center", width: "100%" }}>
+        <span
+          style={{
+            fontSize: "0.95em",
+            paddingTop: "4px",
+            textAlign: "center",
+            width: "100%",
+          }}
+        >
           {formatMultiplication(denominator)}
         </span>
       </span>
     );
   }
-  return <span style={{ padding: "0 4px" }}>{formatMultiplication(token)}</span>;
+  return (
+    <span style={{ padding: "0 4px" }}>{formatMultiplication(token)}</span>
+  );
 }
 
 function RenderFraction({ text }: { text: string }) {
@@ -54,14 +80,20 @@ function RenderFraction({ text }: { text: string }) {
   const tokens = cleanText.split(/\s+/).filter(Boolean);
 
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", flexWrap: "wrap" }}>
+    <span
+      style={{ display: "inline-flex", alignItems: "center", flexWrap: "wrap" }}
+    >
       {tokens.map((token, i) => (
         <span key={i} style={{ display: "inline-flex", alignItems: "center" }}>
           {i > 0 && <span style={{ padding: "0 2px" }}>·</span>}
           <RenderFactor token={token} />
         </span>
       ))}
-      {multiplier && <span style={{ paddingLeft: "4px" }}>{formatMultiplication(multiplier)}</span>}
+      {multiplier && (
+        <span style={{ paddingLeft: "4px" }}>
+          {formatMultiplication(multiplier)}
+        </span>
+      )}
     </span>
   );
 }
@@ -110,14 +142,29 @@ function parseLatexNodes(input: string): ReactNode[] {
           const [num, afterNum] = readGroup(input, i);
           const [den, afterDen] = readGroup(input, afterNum);
           nodes.push(
-            <span key={key++} style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", verticalAlign: "middle", padding: "0 6px" }}>
-              <span style={{ borderBottom: "1px solid currentColor", padding: "0 4px", fontSize: "0.9em" }}>
+            <span
+              key={key++}
+              style={{
+                display: "inline-flex",
+                flexDirection: "column",
+                alignItems: "center",
+                verticalAlign: "middle",
+                padding: "0 6px",
+              }}
+            >
+              <span
+                style={{
+                  borderBottom: "1px solid currentColor",
+                  padding: "0 4px",
+                  fontSize: "0.9em",
+                }}
+              >
                 {parseLatexNodes(num)}
               </span>
               <span style={{ fontSize: "0.9em", paddingTop: "2px" }}>
                 {parseLatexNodes(den)}
               </span>
-            </span>
+            </span>,
           );
           i = afterDen;
           continue;
@@ -126,19 +173,31 @@ function parseLatexNodes(input: string): ReactNode[] {
         if (cmd === "sqrt") {
           const [content, afterContent] = readGroup(input, i);
           nodes.push(
-            <span key={key++} style={{ display: "inline-flex", alignItems: "flex-start" }}>
+            <span
+              key={key++}
+              style={{ display: "inline-flex", alignItems: "flex-start" }}
+            >
               <span style={{ marginRight: "1px" }}>√</span>
-              <span style={{ borderTop: "1px solid currentColor", paddingTop: "1px" }}>
+              <span
+                style={{
+                  borderTop: "1px solid currentColor",
+                  paddingTop: "1px",
+                }}
+              >
                 {parseLatexNodes(content)}
               </span>
-            </span>
+            </span>,
           );
           i = afterContent;
           continue;
         }
 
         if (cmd === "cdot" || cmd === "times") {
-          nodes.push(<span key={key++} style={{ padding: "0 2px" }}>·</span>);
+          nodes.push(
+            <span key={key++} style={{ padding: "0 2px" }}>
+              ·
+            </span>,
+          );
           continue;
         }
 
@@ -159,14 +218,22 @@ function parseLatexNodes(input: string): ReactNode[] {
 
     if (ch === "_") {
       const [sub, after] = readGroup(input, i + 1);
-      nodes.push(<sub key={key++} style={{ fontSize: "0.75em" }}>{parseLatexNodes(sub)}</sub>);
+      nodes.push(
+        <sub key={key++} style={{ fontSize: "0.75em" }}>
+          {parseLatexNodes(sub)}
+        </sub>,
+      );
       i = after;
       continue;
     }
 
     if (ch === "^") {
       const [sup, after] = readGroup(input, i + 1);
-      nodes.push(<sup key={key++} style={{ fontSize: "0.75em" }}>{parseLatexNodes(sup)}</sup>);
+      nodes.push(
+        <sup key={key++} style={{ fontSize: "0.75em" }}>
+          {parseLatexNodes(sup)}
+        </sup>,
+      );
       i = after;
       continue;
     }
@@ -200,9 +267,26 @@ function ProcessEquation({ text }: { text: string }) {
 
   if (isLatexLike(targetText)) {
     return (
-      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-        {prefix && <span style={{ color: "#a0aec0", marginRight: "4px" }}>{prefix.trim()}</span>}
-        <span style={{ display: "inline-flex", alignItems: "center", fontStyle: "italic" }}>
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "6px",
+          flexWrap: "wrap",
+        }}
+      >
+        {prefix && (
+          <span style={{ color: "#a0aec0", marginRight: "4px" }}>
+            {prefix.trim()}
+          </span>
+        )}
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            fontStyle: "italic",
+          }}
+        >
           {parseLatexNodes(targetText.trim())}
         </span>
       </span>
@@ -212,20 +296,42 @@ function ProcessEquation({ text }: { text: string }) {
   if (targetText.includes("=")) {
     const parts = targetText.split("=");
     return (
-      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-        {prefix && <span style={{ color: "#a0aec0", marginRight: "4px" }}>{prefix.trim()}</span>}
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "6px",
+          flexWrap: "wrap",
+        }}
+      >
+        {prefix && (
+          <span style={{ color: "#a0aec0", marginRight: "4px" }}>
+            {prefix.trim()}
+          </span>
+        )}
         {parts.flatMap((part, i) =>
           i < parts.length - 1
-            ? [<RenderFraction key={`f-${i}`} text={part} />, <span key={`eq-${i}`} style={{ padding: "0 4px" }}>=</span>]
-            : [<RenderFraction key={`f-${i}`} text={part} />]
+            ? [
+                <RenderFraction key={`f-${i}`} text={part} />,
+                <span key={`eq-${i}`} style={{ padding: "0 4px" }}>
+                  =
+                </span>,
+              ]
+            : [<RenderFraction key={`f-${i}`} text={part} />],
         )}
       </span>
     );
   }
 
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", flexWrap: "wrap" }}>
-      {prefix && <span style={{ color: "#a0aec0", marginRight: "4px" }}>{prefix.trim()}</span>}
+    <span
+      style={{ display: "inline-flex", alignItems: "center", flexWrap: "wrap" }}
+    >
+      {prefix && (
+        <span style={{ color: "#a0aec0", marginRight: "4px" }}>
+          {prefix.trim()}
+        </span>
+      )}
       <RenderFraction text={targetText} />
     </span>
   );
@@ -236,9 +342,32 @@ function FormatEquation({ text }: { text: string }) {
     if (text.includes(":")) {
       const [labelText, equationText] = text.split(":");
       return (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", width: "100%", marginBottom: "12px" }}>
-          <span style={{ fontSize: "0.95em", color: "#a0aec0", textAlign: "center" }}>{labelText.trim()}:</span>
-          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "8px",
+            width: "100%",
+            marginBottom: "12px",
+          }}
+        >
+          <span
+            style={{
+              fontSize: "0.95em",
+              color: "#a0aec0",
+              textAlign: "center",
+            }}
+          >
+            {labelText.trim()}:
+          </span>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <ProcessEquation text={equationText} />
           </div>
         </div>
@@ -250,12 +379,20 @@ function FormatEquation({ text }: { text: string }) {
   return content;
 }
 
-export function FormulaCard({ card, onChanged }: { card: FormulaData; onChanged?: () => void }) {
-  const { auth, setAccessToken, logout } = useAuth();
+export function FormulaCard({
+  card,
+  onChanged,
+}: {
+  card: FormulaData;
+  onChanged?: () => void;
+}) {
+  const { auth, logout } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [topic, setTopic] = useState(card.topic);
   const [equationText, setEquationText] = useState(
-    Array.isArray(card.equation) ? card.equation.join("\n") : String(card.equation)
+    Array.isArray(card.equation)
+      ? card.equation.join("\n")
+      : String(card.equation),
   );
   const [grade, setGrade] = useState(card.grade);
   const [url, setUrl] = useState(card.url || "");
@@ -263,7 +400,7 @@ export function FormulaCard({ card, onChanged }: { card: FormulaData; onChanged?
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  if (!auth || auth.role !== "teacher"){
+  if (!auth || auth.role !== "teacher") {
     return (
       <div className="card">
         <StarButton itemType="formula" itemId={card._id} />
@@ -286,7 +423,12 @@ export function FormulaCard({ card, onChanged }: { card: FormulaData; onChanged?
         <div className="cardFooter">
           <span className="gradeTag">{card.grade}-ე კლასი</span>
           {card.url && (
-            <a href={card.url} className="cardLink" target="_blank" rel="noreferrer">
+            <a
+              href={card.url}
+              className="cardLink"
+              target="_blank"
+              rel="noreferrer"
+            >
               {card.urlName || "იხილეთ მეტი"}
             </a>
           )}
@@ -297,24 +439,28 @@ export function FormulaCard({ card, onChanged }: { card: FormulaData; onChanged?
 
   const handleSave = async () => {
     setError(null);
-    const equation = equationText.split("\n").map((l) => l.trim()).filter(Boolean);
+    const equation = equationText
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
     if (equation.length === 0) {
       setError("დაამატეთ მინიმუმ ერთი ფორმულა");
       return;
     }
     setIsSaving(true);
     try {
-      await patchWithAuth(
-        `formulas/${card._id}`,
-        auth.accessToken,
-        { topic, equation, grade, url: url || undefined, urlName: urlName || undefined },
-        auth.refreshToken,
-        setAccessToken
-      );
+      await patchWithAuth(`formulas/${card._id}`, {
+        topic,
+        equation,
+        grade,
+        url: url || undefined,
+        urlName: urlName || undefined,
+      });
       setIsEditing(false);
       onChanged?.();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "განახლება ვერ მოხერხდა";
+      const message =
+        err instanceof Error ? err.message : "განახლება ვერ მოხერხდა";
       if (message.includes("სესია ამოიწურა")) logout();
       setError(message);
     } finally {
@@ -327,7 +473,7 @@ export function FormulaCard({ card, onChanged }: { card: FormulaData; onChanged?
     setError(null);
     setIsSaving(true);
     try {
-      await deleteWithAuth(`formulas/${card._id}`, auth.accessToken, auth.refreshToken, setAccessToken);
+      await deleteWithAuth(`formulas/${card._id}`);
       onChanged?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : "წაშლა ვერ მოხერხდა";
@@ -347,7 +493,12 @@ export function FormulaCard({ card, onChanged }: { card: FormulaData; onChanged?
             handleSave();
           }}
         >
-          <input className="searchInput" value={topic} onChange={(e) => setTopic(e.target.value)} required />
+          <input
+            className="searchInput"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            required
+          />
           <textarea
             className="searchInput addCardTextarea"
             value={equationText}
@@ -359,22 +510,42 @@ export function FormulaCard({ card, onChanged }: { card: FormulaData; onChanged?
             required
           />
           <div className="addCardRow">
-            <select className="searchInput" value={grade} onChange={(e) => setGrade(Number(e.target.value))}>
+            <select
+              className="searchInput"
+              value={grade}
+              onChange={(e) => setGrade(Number(e.target.value))}
+            >
               {GRADES.map((g) => (
-                <option key={g} value={g}>{g}-ე კლასი</option>
+                <option key={g} value={g}>
+                  {g}-ე კლასი
+                </option>
               ))}
             </select>
           </div>
           <div className="addCardRow">
-            <input className="searchInput" placeholder="ბმული" value={url} onChange={(e) => setUrl(e.target.value)} />
-            <input className="searchInput" placeholder="ბმულის სახელი" value={urlName} onChange={(e) => setUrlName(e.target.value)} />
+            <input
+              className="searchInput"
+              placeholder="ბმული"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+            />
+            <input
+              className="searchInput"
+              placeholder="ბმულის სახელი"
+              value={urlName}
+              onChange={(e) => setUrlName(e.target.value)}
+            />
           </div>
           {error && <p className="authError">{error}</p>}
           <div className="addCardRow">
             <button type="submit" className="authSubmitBtn" disabled={isSaving}>
               {isSaving ? "იტვირთება..." : "შენახვა"}
             </button>
-            <button type="button" className="addCardToggle" onClick={() => setIsEditing(false)}>
+            <button
+              type="button"
+              className="addCardToggle"
+              onClick={() => setIsEditing(false)}
+            >
               გაუქმება
             </button>
           </div>
@@ -405,17 +576,31 @@ export function FormulaCard({ card, onChanged }: { card: FormulaData; onChanged?
       <div className="cardFooter">
         <span className="gradeTag">{card.grade}-ე კლასი</span>
         {card.url && (
-          <a href={card.url} className="cardLink" target="_blank" rel="noreferrer">
+          <a
+            href={card.url}
+            className="cardLink"
+            target="_blank"
+            rel="noreferrer"
+          >
             {card.urlName || "იხილეთ მეტი"}
           </a>
         )}
       </div>
       {error && <p className="authError">{error}</p>}
       <div className="addCardRow">
-        <button type="button" className="addCardToggle" onClick={() => setIsEditing(true)}>
+        <button
+          type="button"
+          className="addCardToggle"
+          onClick={() => setIsEditing(true)}
+        >
           რედაქტირება
         </button>
-        <button type="button" className="addCardToggle" onClick={handleDelete} disabled={isSaving}>
+        <button
+          type="button"
+          className="addCardToggle"
+          onClick={handleDelete}
+          disabled={isSaving}
+        >
           წაშლა
         </button>
       </div>
