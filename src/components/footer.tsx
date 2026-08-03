@@ -15,7 +15,9 @@ function Footer() {
 
                 <nav className="footerLinks" aria-label="Footer navigation">
                     <Link href="/about" className="footerLink">შესახებ</Link>
-                    
+                    <Link href="/terms" className="footerLink">წესები და პირობები</Link>
+                    <Link href="/privacy" className="footerLink">კონფიდენციალურობა</Link>
+
                     <a
                         href="https://linktr.ee/giorgibezhiashvili"
                         target="_blank"

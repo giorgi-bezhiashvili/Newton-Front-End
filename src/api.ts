@@ -236,7 +236,9 @@ export async function checkQuizAnswer(
 }
 
 export function markQuizDone(quizId: string) {
-  return putWithAuth<{ message: string }>(`quiz/${quizId}`);
+  return putWithAuth<{ message: string; doneQuizes: string[] }>(
+    `quiz/${quizId}/addToDone`
+  );
 }
 
 export function fetchDoneQuizzes() {

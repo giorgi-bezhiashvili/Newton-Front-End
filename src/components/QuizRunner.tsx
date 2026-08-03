@@ -8,7 +8,7 @@ import { GradeFilter } from "./gradeFilter";
 import { useAuth } from "../contexts/AuthContext";
 import { fetchDailyStreak, recordDailyStreakHit } from "../utils/streak";
 import type { QuizData } from "../types";
-
+import { markQuizDone } from "../api";
 const ANIMATION_MS = 350;
 
 type ViewMode = "new" | "completed";
@@ -149,9 +149,12 @@ export function QuizRunner() {
     setExiting(true);
     setTimeout(() => {
       const currentQuiz = filteredQuizzes[currentIndex];
-      if (currentQuiz && auth && viewMode === "new") {
-        setDoneQuizIds((prev) => new Set([...prev, currentQuiz._id]));
-      }
+if (currentQuiz && auth && viewMode === "new") {
+  setDoneQuizIds((prev) => new Set([...prev, currentQuiz._id]));
+  markQuizDone(currentQuiz._id).catch((err) =>
+    console.error("Error marking quiz done:", err)
+  );
+}
 
       setCurrentIndex((i) => i + 1);
       setExiting(false);

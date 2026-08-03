@@ -1503,7 +1503,20 @@ img {
   font-size: 1.6rem;
   color: var(--amber-bright);
 }
+.container ul,
+.container ol {
+  margin: 0 0 1em;
+  padding-left: 1.25em;
+  color: var(--text-dim);
+  line-height: 1.75;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
+.container li::marker {
+  color: var(--amber-dim);
+}
 /* ==========================================================================
    Footer
    ========================================================================== */

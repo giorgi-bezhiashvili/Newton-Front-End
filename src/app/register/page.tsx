@@ -115,6 +115,17 @@ function RegisterPage() {
           <p className="authSubtitle" style={{ marginTop: "1rem" }}>
             უკვე გაქვთ ანგარიში? <Link href="/login">შედით სისტემაში</Link>
           </p>
+          <p className="authSubtitle" style={{ marginTop: "1rem" }}>
+            რეგისტრაციის გაგრძელებით, თქვენ ეთანხმებით ჩვენს{" "}
+            <Link href="/terms" className="cardLink">
+              წესებს და პირობებს
+            </Link>{" "}
+            და{" "}
+            <Link href="/privacy" className="cardLink">
+              კონფიდენციალურობის პოლიტიკას
+            </Link>
+            .
+          </p>
         </form>
       </main>
       <Footer />

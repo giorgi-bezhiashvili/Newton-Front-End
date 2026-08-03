@@ -8,20 +8,29 @@ import { useAuth } from "../contexts/AuthContext";
 function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { isAuthenticated } = useAuth();
+  
+  // Call hook inside component and include isLoading
+  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const toggleMenu = () => {
-    setIsOpen(!isOpen);
+    setIsOpen((prev) => !prev);
   };
 
   return (
     <header className="mainHeader">
       <Link href="/">
-        <Image src="/logo.png" className="imgLogo" alt="logo" width={48} height={48} priority />
+        <Image
+          src="/logo.png"
+          className="imgLogo"
+          alt="logo"
+          width={48}
+          height={48}
+          priority
+        />
       </Link>
 
       <button
@@ -43,21 +52,39 @@ function Header() {
         </ul>
 
         <ul className="navActions">
-          {mounted && isAuthenticated && (
+          {mounted && !isLoading && isAuthenticated && (
             <li>
               <Link href="/account" className="navUserBtn" aria-label="ჩემი ანგარიში">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M20 21a8 8 0 0 0-16 0" />
                   <circle cx="12" cy="7" r="4" />
                 </svg>
               </Link>
             </li>
           )}
-          {mounted && !isAuthenticated && (
-            <li><Link className="navActionLink" href="/login">შესვლა</Link></li>
-          )}
-          {mounted && !isAuthenticated && (
-            <li><Link className="navActionLink navActionPrimary" href="/register">რეგისტრაცია</Link></li>
+
+          {mounted && !isLoading && !isAuthenticated && (
+            <>
+              <li>
+                <Link className="navActionLink" href="/login">
+                  შესვლა
+                </Link>
+              </li>
+              <li>
+                <Link className="navActionLink navActionPrimary" href="/register">
+                  რეგისტრაცია
+                </Link>
+              </li>
+            </>
           )}
         </ul>
       </nav>
