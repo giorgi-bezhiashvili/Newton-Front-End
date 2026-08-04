@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import type { QuizData } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import { patchWithAuth, deleteWithAuth, checkQuizAnswer } from "../api";
@@ -15,11 +15,15 @@ export function QuizCard({
   onChanged,
   onNext,
   onAnswered,
+  timerEnabled,
+  onTimerEnabledChange,
 }: {
   card: QuizData;
   onChanged?: () => void;
   onNext: () => void;
   onAnswered: (correct: boolean) => void;
+  timerEnabled: boolean;
+  onTimerEnabledChange: (enabled: boolean) => void;
 }) {
   const { auth, logout } = useAuth();
   const isMultipleChoice = card.answers.length > 1;
@@ -37,37 +41,55 @@ export function QuizCard({
   const [isChecking, setIsChecking] = useState(false);
 
   // --- timer state ---
-  const [timerEnabled, setTimerEnabled] = useState(true);
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
 
-  // Submit answer to backend API
-  const submitAnswer = async (answerToSubmit: string, isTimeout = false) => {
-    if (submitted || isChecking) return;
-    setIsChecking(true);
-    try {
-      const res = await checkQuizAnswer(card._id, answerToSubmit);
-      setIsCorrect(res.correct);
-      setRevealedRealAnswer(res.realAnswer);
-      setRevealedExplanation(res.explanation);
-      setTimedOut(isTimeout);
-      setSubmitted(true);
-      onAnswered(res.correct);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsChecking(false);
-    }
-  };
-
+  // Reset local state when switching to a different card
   useEffect(() => {
-    if (!timerEnabled || submitted || isChecking) return;
-    if (timeLeft <= 0) {
-      submitAnswer(textAnswer, true);
-      return;
-    }
-    const id = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
-    return () => clearTimeout(id);
-  }, [timerEnabled, submitted, timeLeft, textAnswer, isChecking]);
+    setSelected(null);
+    setTextAnswer("");
+    setSubmitted(false);
+    setIsCorrect(false);
+    setTimedOut(false);
+    setRevealedRealAnswer("");
+    setRevealedExplanation("");
+    setTimeLeft(TIMER_SECONDS);
+    setIsEditing(false);
+  }, [card._id]);
+
+  // Submit answer to backend API
+  const submitAnswer = useCallback(
+    async (answerToSubmit: string, isTimeout = false) => {
+      if (submitted || isChecking) return;
+      setIsChecking(true);
+      try {
+        const res = await checkQuizAnswer(card._id, answerToSubmit);
+        setIsCorrect(res.correct);
+        setRevealedRealAnswer(res.realAnswer);
+        setRevealedExplanation(res.explanation);
+        setTimedOut(isTimeout);
+        setSubmitted(true);
+        onAnswered(res.correct);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsChecking(false);
+      }
+    },
+    [submitted, isChecking, card._id, onAnswered]
+  );
+
+  // Timer Countdown Logic
+useEffect(() => {
+  if (!timerEnabled || submitted || isChecking) return;
+
+  if (timeLeft <= 0) {
+    submitAnswer(textAnswer, true);
+    return;
+  }
+
+  const id = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
+  return () => clearTimeout(id);
+}, [timerEnabled, submitted, timeLeft, textAnswer, isChecking, submitAnswer]);
 
   const handleChoice = (answer: string) => {
     setSelected(answer);
@@ -102,6 +124,18 @@ export function QuizCard({
   const [urlName, setUrlName] = useState(card.urlName || "");
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Sync form inputs if card changes while editing
+  useEffect(() => {
+    setTopic(card.topic);
+    setAssignment(card.assignment);
+    setAnswersText(card.answers.join("\n"));
+    setRealAnswer(card.realAnswer || "");
+    setGrade(card.grade);
+    setExplanation(card.explanation || "");
+    setUrl(card.url || "");
+    setUrlName(card.urlName || "");
+  }, [card]);
 
   const handleSave = async () => {
     setError(null);
@@ -198,7 +232,7 @@ export function QuizCard({
               {submitted ? "" : "დროის ლიმიტი გამორთულია"}
             </span>
           )}
-          <button type="button" className="timerToggleBtn" onClick={() => setTimerEnabled((v) => !v)}>
+          <button type="button" className="timerToggleBtn" onClick={() => onTimerEnabledChange(!timerEnabled)}>
             {timerEnabled ? "⏱ ტაიმერის გამორთვა" : "⏱ ტაიმერის ჩართვა"}
           </button>
         </div>

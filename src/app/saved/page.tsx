@@ -10,6 +10,7 @@ import { ProjectCard } from "../../components/ProjectCard";
 import { RevealOnScroll } from "../../components/RevealOnScroll";
 import { useAuth } from "../../contexts/AuthContext";
 import { useSaved } from "../../contexts/SavedContext";
+import type { QuizData } from "../../types";
 
 type TabKey = "all" | "formula" | "quiz" | "project";
 
@@ -19,6 +20,31 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "quiz", label: "ქვიზები" },
   { key: "project", label: "რესურსები" },
 ];
+
+/**
+ * Wrapper component for QuizCard in saved list view.
+ * Gives each individual card its own timer state.
+ */
+function SavedQuizCard({
+  card,
+  onChanged,
+}: {
+  card: QuizData;
+  onChanged: () => void;
+}) {
+  const [timerEnabled, setTimerEnabled] = useState(true);
+
+  return (
+    <QuizCard
+      card={card}
+      onChanged={onChanged}
+      onNext={() => {}}
+      onAnswered={() => {}}
+      timerEnabled={timerEnabled}
+      onTimerEnabledChange={setTimerEnabled}
+    />
+  );
+}
 
 export default function SavedPage() {
   const { isAuthenticated } = useAuth();
@@ -66,12 +92,16 @@ export default function SavedPage() {
     );
   }, [savedData.projects, searchLower, tab]);
 
-  const totalResults = filteredFormulas.length + filteredQuizzes.length + filteredProjects.length;
+  const totalResults =
+    filteredFormulas.length + filteredQuizzes.length + filteredProjects.length;
 
   return (
     <>
       <title>შენახულები — Newton</title>
-      <meta name="description" content="თქვენს მიერ შენახული ფორმულები, ქვიზები და რესურსები" />
+      <meta
+        name="description"
+        content="თქვენს მიერ შენახული ფორმულები, ქვიზები და რესურსები"
+      />
 
       <div className="space-page">
         <Header />
@@ -107,7 +137,9 @@ export default function SavedPage() {
                     <button
                       key={t.key}
                       type="button"
-                      className={`gradeFilterBtn ${tab === t.key ? "active" : ""}`}
+                      className={`gradeFilterBtn ${
+                        tab === t.key ? "active" : ""
+                      }`}
                       onClick={() => setTab(t.key)}
                     >
                       {t.label}
@@ -133,12 +165,7 @@ export default function SavedPage() {
                   ))}
                   {filteredQuizzes.map((card) => (
                     <RevealOnScroll key={`quiz-${card._id}`}>
-                      <QuizCard
-                        card={card}
-                        onChanged={refetchSaved}
-                        onNext={() => {}}
-                        onAnswered={() => {}}
-                      />
+                      <SavedQuizCard card={card} onChanged={refetchSaved} />
                     </RevealOnScroll>
                   ))}
                   {filteredProjects.map((card) => (

@@ -17,7 +17,10 @@ function QuizCardSkeleton() {
   return (
     <div className="card quizCard cardSkeleton">
       <div>
-        <div className="skeletonLine skeletonTag" style={{ marginBottom: 20 }} />
+        <div
+          className="skeletonLine skeletonTag"
+          style={{ marginBottom: 20 }}
+        />
         <div className="skeletonLine skeletonTitle" />
         <div className="skeletonLine" />
         <div className="skeletonLine skeletonShort" />
@@ -37,6 +40,7 @@ function QuizCardSkeleton() {
 
 export function QuizRunner() {
   const { auth } = useAuth();
+  const [timerEnabled, setTimerEnabled] = useState(true);
   const [quizzes, setQuizzes] = useState<QuizData[]>([]);
   const [doneQuizIds, setDoneQuizIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
@@ -142,19 +146,19 @@ export function QuizRunner() {
           .catch(() => {});
       }
     },
-    [auth]
+    [auth],
   );
 
   const handleNext = () => {
     setExiting(true);
     setTimeout(() => {
       const currentQuiz = filteredQuizzes[currentIndex];
-if (currentQuiz && auth && viewMode === "new") {
-  setDoneQuizIds((prev) => new Set([...prev, currentQuiz._id]));
-  markQuizDone(currentQuiz._id).catch((err) =>
-    console.error("Error marking quiz done:", err)
-  );
-}
+      if (currentQuiz && auth && viewMode === "new") {
+        setDoneQuizIds((prev) => new Set([...prev, currentQuiz._id]));
+        markQuizDone(currentQuiz._id).catch((err) =>
+          console.error("Error marking quiz done:", err),
+        );
+      }
 
       setCurrentIndex((i) => i + 1);
       setExiting(false);
@@ -199,7 +203,8 @@ if (currentQuiz && auth && viewMode === "new") {
             className={`quizToggleBtn ${viewMode === "new" ? "active" : ""}`}
             onClick={() => setViewMode("new")}
           >
-            ✨ ახალი ქვიზები ({quizzes.filter((q) => !doneQuizIds.has(q._id)).length})
+            ✨ ახალი ქვიზები (
+            {quizzes.filter((q) => !doneQuizIds.has(q._id)).length})
           </button>
           <button
             type="button"
@@ -232,10 +237,10 @@ if (currentQuiz && auth && viewMode === "new") {
             {viewMode === "completed"
               ? "შესრულებული ქვიზები ჯერ არ გაქვთ."
               : doneQuizIds.size > 0 && quizzes.length > 0
-              ? "ყველა ხელმისაწვდომი ქვიზი შეასრულეთ! 🎉"
-              : searchQuery.trim()
-              ? "შესაბამისი ქვიზი ვერ მოიძებნა"
-              : "ამ კლასისთვის ქვიზები არ მოიძებნა"}
+                ? "ყველა ხელმისაწვდომი ქვიზი შეასრულეთ! 🎉"
+                : searchQuery.trim()
+                  ? "შესაბამისი ქვიზი ვერ მოიძებნა"
+                  : "ამ კლასისთვის ქვიზები არ მოიძებნა"}
           </p>
         </div>
       ) : currentIndex >= filteredQuizzes.length ? (
@@ -252,7 +257,11 @@ if (currentQuiz && auth && viewMode === "new") {
               დღიანი სერია
             </div>
           </div>
-          <button type="button" className="authSubmitBtn" onClick={handleRestart}>
+          <button
+            type="button"
+            className="authSubmitBtn"
+            onClick={handleRestart}
+          >
             თავიდან დაწყება
           </button>
         </div>
@@ -262,19 +271,26 @@ if (currentQuiz && auth && viewMode === "new") {
             <div className="quizProgressTrack">
               <div
                 className="quizProgressBar"
-                style={{ width: `${(currentIndex / filteredQuizzes.length) * 100}%` }}
+                style={{
+                  width: `${(currentIndex / filteredQuizzes.length) * 100}%`,
+                }}
               />
             </div>
             <span className="quizProgressLabel">
               {currentIndex + 1} / {filteredQuizzes.length}
             </span>
           </div>
-          <div className={`quizSlide ${exiting ? "exiting" : ""}`} key={filteredQuizzes[currentIndex]._id}>
+          <div
+            className={`quizSlide ${exiting ? "exiting" : ""}`}
+            key={filteredQuizzes[currentIndex]._id}
+          >
             <QuizCard
               card={filteredQuizzes[currentIndex]}
               onChanged={handleChanged}
               onNext={handleNext}
               onAnswered={handleAnswered}
+              timerEnabled={timerEnabled}
+              onTimerEnabledChange={setTimerEnabled}
             />
           </div>
         </>
