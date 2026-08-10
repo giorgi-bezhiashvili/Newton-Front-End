@@ -1,18 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import type { FormulaData } from "../types";
-import { useAuth } from "../contexts/AuthContext";
-import { patchWithAuth, deleteWithAuth } from "../api";
-import { StarButton } from "./StarButton";
-import type { ReactNode } from "react";
-// Local FormatEquation renderer is defined below; avoid importing a conflicting symbol
-// import {FormatEquation} from "./EquationText";
-const GRADES = [7, 8, 9, 10, 11, 12];
+import { useMemo, type ReactNode } from "react";
 
 // Turns "G*m1m2" or "G m1m2" into "G · m1 · m2" for display.
-// Explicit "*" is a multiplication sign; a digit immediately followed by a
-// letter (e.g. the boundary inside "m1m2") is treated as an implied one too.
 function formatMultiplication(raw: string): string {
   let s = raw.trim().replace(/\s+/g, " ");
   s = s.replace(/\*/g, "·");
@@ -22,7 +12,6 @@ function formatMultiplication(raw: string): string {
   return s;
 }
 
-// Renders a single space-separated factor: a fraction if it has a "/", plain text otherwise.
 function RenderFactor({ token }: { token: string }) {
   if (token.includes("/")) {
     const [numerator, denominator] = token.split("/");
@@ -76,8 +65,6 @@ function RenderFraction({ text }: { text: string }) {
     multiplier = parenFractionMatch[2];
   }
 
-  // A space at the top level just means multiplication (e.g. "G m1m2/r²" is
-  // G times the fraction m1m2/r² — G should NOT end up inside the fraction).
   const tokens = cleanText.split(/\s+/).filter(Boolean);
 
   return (
@@ -100,15 +87,10 @@ function RenderFraction({ text }: { text: string }) {
 }
 
 // ---- Custom LaTeX-ish renderer (no external dependency) ----
-// Supports: \frac{a}{b}, \sqrt{a}, \cdot, \times, _{sub} / _x, ^{sup} / ^x
-// Falls back to plain text for anything else.
-
-function isLatexLike(text: string): boolean {
+export function isLatexLike(text: string): boolean {
   return /\\(frac|sqrt|cdot|times)/.test(text) || /[_^]/.test(text);
 }
 
-// Reads a {...} group starting at index i (balanced braces), or if there's
-// no brace, reads just the single next character as the argument.
 function readGroup(input: string, start: number): [string, number] {
   let i = start;
   while (input[i] === " ") i++;
@@ -122,9 +104,30 @@ function readGroup(input: string, start: number): [string, number] {
     }
     return [input.slice(i + 1, j - 1), j];
   }
+  if (input[i] === "\\") {
+    const m = input.slice(i).match(/^\\[a-zA-Z]+/);
+    if (m) return [m[0], i + m[0].length];
+  }
   return [input[i] ?? "", i + 1];
 }
-
+const SYMBOL_COMMANDS: Record<string, string> = {
+  circ: "°",
+  pm: "±",
+  mp: "∓",
+  le: "≤",
+  ge: "≥",
+  neq: "≠",
+  approx: "≈",
+  infty: "∞",
+  pi: "π",
+  alpha: "α",
+  beta: "β",
+  gamma: "γ",
+  delta: "δ",
+  Delta: "Δ",
+  theta: "θ",
+  omega: "ω",
+};
 function parseLatexNodes(input: string): ReactNode[] {
   const nodes: ReactNode[] = [];
   let i = 0;
@@ -202,6 +205,11 @@ function parseLatexNodes(input: string): ReactNode[] {
           continue;
         }
 
+        if (SYMBOL_COMMANDS[cmd]) {
+          nodes.push(<span key={key++}>{SYMBOL_COMMANDS[cmd]}</span>);
+          continue;
+        }
+
         if (cmd === "text") {
           const [content, afterContent] = readGroup(input, i);
           nodes.push(<span key={key++}>{content}</span>);
@@ -209,11 +217,10 @@ function parseLatexNodes(input: string): ReactNode[] {
           continue;
         }
 
-        // Unknown command — just show its name without the backslash
         nodes.push(<span key={key++}>{cmd}</span>);
         continue;
       }
-      i++; // stray backslash, skip
+      i++;
       continue;
     }
 
@@ -246,7 +253,6 @@ function parseLatexNodes(input: string): ReactNode[] {
       continue;
     }
 
-    // Plain text run until the next special character
     let j = i;
     while (j < input.length && !"\\_^{".includes(input[j])) j++;
     nodes.push(<span key={key++}>{input.slice(i, j)}</span>);
@@ -338,7 +344,12 @@ function ProcessEquation({ text }: { text: string }) {
   );
 }
 
-function FormatEquation({ text }: { text: string }) {
+/**
+ * Public: formats a single line of text that may contain equations/LaTeX-ish
+ * markup ("label:", \frac{}{}, \sqrt{}, _sub, ^sup, "=", fractions with "/").
+ * Falls back to rendering plain text untouched.
+ */
+export function FormatEquation({ text }: { text: string }) {
   const content = useMemo(() => {
     if (text.includes(":")) {
       const [labelText, equationText] = text.split(":");
@@ -379,232 +390,125 @@ function FormatEquation({ text }: { text: string }) {
 
   return content;
 }
-
-export function FormulaCard({
-  card,
-  onChanged,
-}: {
-  card: FormulaData;
-  onChanged?: () => void;
-}) {
-  const { auth, logout } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
-  const [topic, setTopic] = useState(card.topic);
-  const [equationText, setEquationText] = useState(
-    Array.isArray(card.equation)
-      ? card.equation.join("\n")
-      : String(card.equation),
-  );
-  const [grade, setGrade] = useState(card.grade);
-  const [url, setUrl] = useState(card.url || "");
-  const [urlName, setUrlName] = useState(card.urlName || "");
-  const [error, setError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-
-  if (!auth || auth.role !== "teacher") {
+function MathSpan({ text }: { text: string }) {
+  const trimmed = text.trim();
+  if (isLatexLike(trimmed)) {
     return (
-      <div className="card">
-        <StarButton itemType="formula" itemId={card._id} />
-        <div>
-          <h2>{card.topic}</h2>
-          <div className="equationsList">
-            {Array.isArray(card.equation) ? (
-              card.equation.map((eq, index) => (
-                <p key={index} className="equationLine">
-                  <FormatEquation text={String(eq)} />
-                </p>
-              ))
-            ) : (
-              <p className="equationLine">
-                <FormatEquation text={String(card.equation)} />
-              </p>
-            )}
-          </div>
-        </div>
-        <div className="cardFooter">
-          <span className="gradeTag">{card.grade}-ე კლასი</span>
-          {card.url && (
-            <a
-              href={card.url}
-              className="cardLink"
-              target="_blank"
-              rel="noreferrer"
-            >
-              {card.urlName || "იხილეთ მეტი"}
-            </a>
-          )}
-        </div>
-      </div>
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          fontStyle: "italic",
+        }}
+      >
+        {parseLatexNodes(trimmed)}
+      </span>
     );
   }
-
-  const handleSave = async () => {
-    setError(null);
-    const equation = equationText
-      .split("\n")
-      .map((l) => l.trim())
-      .filter(Boolean);
-    if (equation.length === 0) {
-      setError("დაამატეთ მინიმუმ ერთი ფორმულა");
-      return;
-    }
-    setIsSaving(true);
-    try {
-      await patchWithAuth(`formulas/${card._id}`, {
-        topic,
-        equation,
-        grade,
-        url: url || undefined,
-        urlName: urlName || undefined,
-      });
-      setIsEditing(false);
-      onChanged?.();
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "განახლება ვერ მოხერხდა";
-      if (message.includes("სესია ამოიწურა")) logout();
-      setError(message);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!window.confirm("წავშალო ეს ფორმულა?")) return;
-    setError(null);
-    setIsSaving(true);
-    try {
-      await deleteWithAuth(`formulas/${card._id}`);
-      onChanged?.();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "წაშლა ვერ მოხერხდა";
-      if (message.includes("სესია ამოიწურა")) logout();
-      setError(message);
-      setIsSaving(false);
-    }
-  };
-
-  if (isEditing) {
+  if (trimmed.includes("=")) {
+    const parts = trimmed.split("=");
     return (
-      <div className="card">
-        <form
-          className="addCardForm"
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSave();
-          }}
-        >
-          <input
-            className="searchInput"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            required
-          />
-          <textarea
-            className="searchInput addCardTextarea"
-            value={equationText}
-            onChange={(e) => setEquationText(e.target.value)}
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
-            required
-          />
-          <div className="addCardRow">
-            <select
-              className="searchInput"
-              value={grade}
-              onChange={(e) => setGrade(Number(e.target.value))}
-            >
-              {GRADES.map((g) => (
-                <option key={g} value={g}>
-                  {g}-ე კლასი
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="addCardRow">
-            <input
-              className="searchInput"
-              placeholder="ბმული"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-            />
-            <input
-              className="searchInput"
-              placeholder="ბმულის სახელი"
-              value={urlName}
-              onChange={(e) => setUrlName(e.target.value)}
-            />
-          </div>
-          {error && <p className="authError">{error}</p>}
-          <div className="addCardRow">
-            <button type="submit" className="authSubmitBtn" disabled={isSaving}>
-              {isSaving ? "იტვირთება..." : "შენახვა"}
-            </button>
-            <button
-              type="button"
-              className="addCardToggle"
-              onClick={() => setIsEditing(false)}
-            >
-              გაუქმება
-            </button>
-          </div>
-        </form>
-      </div>
-    );
-  }
-
-  return (
-    <div className="card">
-      <StarButton itemType="formula" itemId={card._id} />
-      <div>
-        <h2>{card.topic}</h2>
-        <div className="equationsList">
-          {Array.isArray(card.equation) ? (
-            card.equation.map((eq, index) => (
-              <p key={index} className="equationLine">
-                <FormatEquation text={String(eq)} />
-              </p>
-            ))
-          ) : (
-            <p className="equationLine">
-              <FormatEquation text={String(card.equation)} />
-            </p>
-          )}
-        </div>
-      </div>
-      <div className="cardFooter">
-        <span className="gradeTag">{card.grade}-ე კლასი</span>
-        {card.url && (
-          <a
-            href={card.url}
-            className="cardLink"
-            target="_blank"
-            rel="noreferrer"
-          >
-            {card.urlName || "იხილეთ მეტი"}
-          </a>
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "6px",
+          flexWrap: "wrap",
+        }}
+      >
+        {parts.flatMap((part, i) =>
+          i < parts.length - 1
+            ? [
+                <RenderFraction key={`f-${i}`} text={part} />,
+                <span key={`eq-${i}`} style={{ padding: "0 4px" }}>
+                  =
+                </span>,
+              ]
+            : [<RenderFraction key={`f-${i}`} text={part} />],
         )}
-      </div>
-      {error && <p className="authError">{error}</p>}
-      <div className="addCardRow">
-        <button
-          type="button"
-          className="addCardToggle"
-          onClick={() => setIsEditing(true)}
-        >
-          რედაქტირება
-        </button>
-        <button
-          type="button"
-          className="addCardToggle"
-          onClick={handleDelete}
-          disabled={isSaving}
-        >
-          წაშლა
-        </button>
-      </div>
-    </div>
+      </span>
+    );
+  }
+  return <RenderFraction text={trimmed} />;
+}
+
+// Splits on $$...$$ (block) / $...$ (inline). Text outside those markers is
+// left completely untouched — no dot-multiplication, no fraction splitting —
+// so ordinary sentences render as normal prose.
+function splitMathSegments(
+  input: string,
+): { type: "text" | "math"; value: string }[] {
+  const segments: { type: "text" | "math"; value: string }[] = [];
+  const regex = /\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(input)) !== null) {
+    if (match.index > lastIndex) {
+      segments.push({
+        type: "text",
+        value: input.slice(lastIndex, match.index),
+      });
+    }
+    segments.push({ type: "math", value: match[1] ?? match[2] ?? "" });
+    lastIndex = regex.lastIndex;
+  }
+  if (lastIndex < input.length) {
+    segments.push({ type: "text", value: input.slice(lastIndex) });
+  }
+  if (segments.length === 0) segments.push({ type: "text", value: input });
+  return segments;
+}
+// Matches a run of LaTeX-ish tokens with no whitespace between them, e.g.
+// "\text{ მმ}", "^\circ", "_{max}" — so these render even without $ wrapping.
+const BARE_LATEX_RUN =
+  /(?:\\[a-zA-Z]+(?:\{[^{}]*\})*|[_^](?:\{[^{}]*\}|\\[a-zA-Z]+|[^\s{}]))+/g;
+
+function BareLatex({ text }: { text: string }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center" }}>
+      {parseLatexNodes(text)}
+    </span>
+  );
+}
+
+function splitBareLatex(text: string): { type: "text" | "bare"; value: string }[] {
+  const segments: { type: "text" | "bare"; value: string }[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  BARE_LATEX_RUN.lastIndex = 0;
+
+  while ((match = BARE_LATEX_RUN.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      segments.push({ type: "text", value: text.slice(lastIndex, match.index) });
+    }
+    segments.push({ type: "bare", value: match[0] });
+    lastIndex = BARE_LATEX_RUN.lastIndex;
+  }
+  if (lastIndex < text.length) {
+    segments.push({ type: "text", value: text.slice(lastIndex) });
+  }
+  return segments;
+}
+export function RichText({ text }: { text: string }) {
+  const segments = useMemo(() => splitMathSegments(text), [text]);
+  return (
+    <>
+      {segments.map((seg, i) =>
+        seg.type === "math" ? (
+          <MathSpan key={i} text={seg.value} />
+        ) : (
+          splitBareLatex(seg.value).map((sub, j) =>
+            sub.type === "bare" ? (
+              <BareLatex key={`${i}-${j}`} text={sub.value} />
+            ) : (
+              <span key={`${i}-${j}`} style={{ whiteSpace: "pre-wrap" }}>
+                {sub.value}
+              </span>
+            ),
+          )
+        ),
+      )}
+    </>
   );
 }

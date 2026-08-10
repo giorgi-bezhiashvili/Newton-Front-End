@@ -8,7 +8,7 @@ import { useAuth } from "../contexts/AuthContext";
 function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  
+
   // Call hook inside component and include isLoading
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -45,31 +45,44 @@ function Header() {
 
       <nav className={`navMenu ${isOpen ? "open" : ""}`}>
         <ul className="navList">
-          <li><Link href="/">მთავარი</Link></li>
-          <li><Link href="/formulas">ფორმულები</Link></li>
-          <li><Link href="/resources">რესურსები</Link></li>
-          <li><Link href="/quiz">ქვიზები</Link></li>
+          <li>
+            <Link href="/">მთავარი</Link>
+          </li>
+          <li>
+            <Link href="/formulas">ფორმულები</Link>
+          </li>
+          <li>
+            <Link href="/resources">რესურსები</Link>
+          </li>
+          <li>
+            <Link href="/quiz">ქვიზები</Link>
+          </li>
         </ul>
 
         <ul className="navActions">
           {mounted && !isLoading && isAuthenticated && (
-            <li>
-              <Link href="/account" className="navUserBtn" aria-label="ჩემი ანგარიში">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M20 21a8 8 0 0 0-16 0" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-              </Link>
-            </li>
+           <li className="navActionsItem">
+      
+      
+      <Link href="/saved" className="savedActionLink">
+        შენახულები
+      </Link>
+      <Link href="/account" className="navUserBtn" aria-label="ჩემი ანგარიში">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M20 21a8 8 0 0 0-16 0" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      </Link>
+    </li>
           )}
 
           {mounted && !isLoading && !isAuthenticated && (
@@ -80,7 +93,10 @@ function Header() {
                 </Link>
               </li>
               <li>
-                <Link className="navActionLink navActionPrimary" href="/register">
+                <Link
+                  className="navActionLink navActionPrimary"
+                  href="/register"
+                >
                   რეგისტრაცია
                 </Link>
               </li>

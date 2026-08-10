@@ -5,11 +5,10 @@ import type { QuizData } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import { patchWithAuth, deleteWithAuth, checkQuizAnswer } from "../api";
 import { StarButton } from "./StarButton";
-
+import { RichText } from "./EquationText";
 const GRADES = [7, 8, 9, 10, 11, 12];
 const TIMER_SECONDS = 20;
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
-
 export function QuizCard({
   card,
   onChanged,
@@ -75,21 +74,21 @@ export function QuizCard({
         setIsChecking(false);
       }
     },
-    [submitted, isChecking, card._id, onAnswered]
+    [submitted, isChecking, card._id, onAnswered],
   );
 
   // Timer Countdown Logic
-useEffect(() => {
-  if (!timerEnabled || submitted || isChecking) return;
+  useEffect(() => {
+    if (!timerEnabled || submitted || isChecking) return;
 
-  if (timeLeft <= 0) {
-    submitAnswer(textAnswer, true);
-    return;
-  }
+    if (timeLeft <= 0) {
+      submitAnswer(textAnswer, true);
+      return;
+    }
 
-  const id = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
-  return () => clearTimeout(id);
-}, [timerEnabled, submitted, timeLeft, textAnswer, isChecking, submitAnswer]);
+    const id = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
+    return () => clearTimeout(id);
+  }, [timerEnabled, submitted, timeLeft, textAnswer, isChecking, submitAnswer]);
 
   const handleChoice = (answer: string) => {
     setSelected(answer);
@@ -139,7 +138,10 @@ useEffect(() => {
 
   const handleSave = async () => {
     setError(null);
-    const answers = answersText.split("\n").map((l) => l.trim()).filter(Boolean);
+    const answers = answersText
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
     setIsSaving(true);
     try {
       await patchWithAuth(`quiz/${card._id}`, {
@@ -155,7 +157,8 @@ useEffect(() => {
       setIsEditing(false);
       onChanged?.();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "განახლება ვერ მოხერხდა";
+      const message =
+        err instanceof Error ? err.message : "განახლება ვერ მოხერხდა";
       if (message.includes("სესია ამოიწურა")) logout();
       setError(message);
     } finally {
@@ -181,30 +184,86 @@ useEffect(() => {
   if (auth?.role === "teacher" && isEditing) {
     return (
       <div className="card quizCard">
-        <form className="addCardForm" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
-          <input className="searchInput" placeholder="თემა" value={topic} onChange={(e) => setTopic(e.target.value)} required />
-          <textarea className="searchInput addCardTextarea" placeholder="კითხვა" value={assignment} onChange={(e) => setAssignment(e.target.value)} required />
+        <form
+          className="addCardForm"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSave();
+          }}
+        >
+          <input
+            className="searchInput"
+            placeholder="თემა"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            required
+          />
+          <textarea
+            className="searchInput addCardTextarea"
+            placeholder="კითხვა"
+            value={assignment}
+            onChange={(e) => setAssignment(e.target.value)}
+            required
+          />
           <textarea
             className="searchInput addCardTextarea"
             placeholder="ვარიანტები (თითო ხაზზე ერთი; ცარიელი — თავისუფალი პასუხისთვის)"
             value={answersText}
             onChange={(e) => setAnswersText(e.target.value)}
           />
-          <input className="searchInput" placeholder="სწორი პასუხი" value={realAnswer} onChange={(e) => setRealAnswer(e.target.value)} required />
-          <textarea className="searchInput addCardTextarea" placeholder="ახსნა" value={explanation} onChange={(e) => setExplanation(e.target.value)} required />
+          <input
+            className="searchInput"
+            placeholder="სწორი პასუხი"
+            value={realAnswer}
+            onChange={(e) => setRealAnswer(e.target.value)}
+            required
+          />
+          <textarea
+            className="searchInput addCardTextarea"
+            placeholder="ახსნა"
+            value={explanation}
+            onChange={(e) => setExplanation(e.target.value)}
+            required
+          />
           <div className="addCardRow">
-            <select className="searchInput" value={grade} onChange={(e) => setGrade(Number(e.target.value))}>
-              {GRADES.map((g) => <option key={g} value={g}>{g}-ე კლასი</option>)}
+            <select
+              className="searchInput"
+              value={grade}
+              onChange={(e) => setGrade(Number(e.target.value))}
+            >
+              {GRADES.map((g) => (
+                <option key={g} value={g}>
+                  {g}-ე კლასი
+                </option>
+              ))}
             </select>
           </div>
           <div className="addCardRow">
-            <input className="searchInput" placeholder="ბმული" value={url} onChange={(e) => setUrl(e.target.value)} />
-            <input className="searchInput" placeholder="ბმულის სახელი" value={urlName} onChange={(e) => setUrlName(e.target.value)} />
+            <input
+              className="searchInput"
+              placeholder="ბმული"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+            />
+            <input
+              className="searchInput"
+              placeholder="ბმულის სახელი"
+              value={urlName}
+              onChange={(e) => setUrlName(e.target.value)}
+            />
           </div>
           {error && <p className="authError">{error}</p>}
           <div className="addCardRow">
-            <button type="submit" className="authSubmitBtn" disabled={isSaving}>{isSaving ? "იტვირთება..." : "შენახვა"}</button>
-            <button type="button" className="addCardToggle" onClick={() => setIsEditing(false)}>გაუქმება</button>
+            <button type="submit" className="authSubmitBtn" disabled={isSaving}>
+              {isSaving ? "იტვირთება..." : "შენახვა"}
+            </button>
+            <button
+              type="button"
+              className="addCardToggle"
+              onClick={() => setIsEditing(false)}
+            >
+              გაუქმება
+            </button>
           </div>
         </form>
       </div>
@@ -223,7 +282,10 @@ useEffect(() => {
           {timerEnabled && !submitted ? (
             <div className={`quizTimerWrap ${timerLow ? "low" : ""}`}>
               <div className="quizTimerTrack">
-                <div className="quizTimerBar" style={{ width: `${(timeLeft / TIMER_SECONDS) * 100}%` }} />
+                <div
+                  className="quizTimerBar"
+                  style={{ width: `${(timeLeft / TIMER_SECONDS) * 100}%` }}
+                />
               </div>
               <span className="quizTimerLabel">{timeLeft}წმ</span>
             </div>
@@ -232,13 +294,19 @@ useEffect(() => {
               {submitted ? "" : "დროის ლიმიტი გამორთულია"}
             </span>
           )}
-          <button type="button" className="timerToggleBtn" onClick={() => onTimerEnabledChange(!timerEnabled)}>
+          <button
+            type="button"
+            className="timerToggleBtn"
+            onClick={() => onTimerEnabledChange(!timerEnabled)}
+          >
             {timerEnabled ? "⏱ ტაიმერის გამორთვა" : "⏱ ტაიმერის ჩართვა"}
           </button>
         </div>
 
         <h2 className="quizQuestion">{card.topic}</h2>
-        <p className="quizAssignmentText">{card.assignment}</p>
+        <p className="quizAssignmentText">
+          <RichText text={card.assignment} />
+        </p>
 
         {isMultipleChoice ? (
           <div className="quizAnswerGrid">
@@ -246,7 +314,11 @@ useEffect(() => {
               const isThisSelected = selected === answer;
               let stateClass = "";
               if (submitted) {
-                if (activeRealAnswer && answer.trim().toLowerCase() === activeRealAnswer.trim().toLowerCase()) {
+                if (
+                  activeRealAnswer &&
+                  answer.trim().toLowerCase() ===
+                    activeRealAnswer.trim().toLowerCase()
+                ) {
                   stateClass = "correct";
                 } else if (isThisSelected) {
                   stateClass = "incorrect";
@@ -262,8 +334,12 @@ useEffect(() => {
                   onClick={() => handleChoice(answer)}
                   disabled={submitted || isChecking}
                 >
-                  <span className="quizAnswerBadge">{LETTERS[i % LETTERS.length]}</span>
-                  <span>{answer}</span>
+                  <span className="quizAnswerBadge">
+                    {LETTERS[i % LETTERS.length]}
+                  </span>
+                  <span>
+                    <RichText text={answer} />
+                  </span>
                 </button>
               );
             })}
@@ -279,7 +355,12 @@ useEffect(() => {
               disabled={submitted || isChecking}
               onKeyDown={(e) => e.key === "Enter" && handleTextSubmit()}
             />
-            <button type="button" className="authSubmitBtn" onClick={handleTextSubmit} disabled={submitted || isChecking}>
+            <button
+              type="button"
+              className="authSubmitBtn"
+              onClick={handleTextSubmit}
+              disabled={submitted || isChecking}
+            >
               {isChecking ? "მოწმდება..." : "შემოწმება"}
             </button>
           </div>
@@ -287,16 +368,34 @@ useEffect(() => {
 
         {submitted && (
           <>
-            <div className={`quizFeedback ${isCorrect ? "correct" : "incorrect"}`}>
-              {timedOut
-                ? `⏱ დრო ამოიწურა — სწორი პასუხია: ${activeRealAnswer}`
-                : isCorrect
-                ? "✓ სწორია!"
-                : `✗ არასწორია — სწორი პასუხია: ${activeRealAnswer}`}
+            <div
+              className={`quizFeedback ${isCorrect ? "correct" : "incorrect"}`}
+            >
+              {timedOut ? (
+                <>
+                  ⏱ დრო ამოიწურა — სწორი პასუხია:{" "}
+                  <RichText text={activeRealAnswer} />
+                </>
+              ) : isCorrect ? (
+                "✓ სწორია!"
+              ) : (
+                <>
+                  ✗ არასწორია — სწორი პასუხია:{" "}
+                  <RichText text={activeRealAnswer} />
+                </>
+              )}
             </div>
-            {activeExplanation && <div className="quizExplanation">{activeExplanation}</div>}
+            {activeExplanation && (
+  <div className="quizExplanation">
+    <RichText text={activeExplanation} />
+  </div>
+)}
             <div className="quizPostActions">
-              <button type="button" className="addCardToggle" onClick={handleRetry}>
+              <button
+                type="button"
+                className="addCardToggle"
+                onClick={handleRetry}
+              >
                 თავიდან ცდა
               </button>
               <button type="button" className="authSubmitBtn" onClick={onNext}>
@@ -310,7 +409,12 @@ useEffect(() => {
       <div className="cardFooter">
         <span className="gradeTag">{card.grade}-ე კლასი</span>
         {card.url && (
-          <a href={card.url} className="cardLink" target="_blank" rel="noreferrer">
+          <a
+            href={card.url}
+            className="cardLink"
+            target="_blank"
+            rel="noreferrer"
+          >
             {card.urlName || "იხილეთ მეტი"}
           </a>
         )}
@@ -320,8 +424,21 @@ useEffect(() => {
         <>
           {error && <p className="authError">{error}</p>}
           <div className="addCardRow">
-            <button type="button" className="addCardToggle" onClick={() => setIsEditing(true)}>რედაქტირება</button>
-            <button type="button" className="addCardToggle" onClick={handleDelete} disabled={isSaving}>წაშლა</button>
+            <button
+              type="button"
+              className="addCardToggle"
+              onClick={() => setIsEditing(true)}
+            >
+              რედაქტირება
+            </button>
+            <button
+              type="button"
+              className="addCardToggle"
+              onClick={handleDelete}
+              disabled={isSaving}
+            >
+              წაშლა
+            </button>
           </div>
         </>
       )}
