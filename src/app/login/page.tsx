@@ -35,7 +35,6 @@ function LoginPage() {
     <>
     
     <div className="space-page">
-      <Header />
       <main className="mainContent authContent">
         <form className="authForm" onSubmit={handleSubmit}>
           <h1 className="authTitle">შესვლა</h1>
@@ -135,7 +134,6 @@ function LoginPage() {
             </p>
         </form>
       </main>
-      <Footer />
     </div>
   </>
   );

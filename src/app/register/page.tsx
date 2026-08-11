@@ -46,7 +46,6 @@ function RegisterPage() {
         content="რეგისტრაციის გვერდი პლატფორმა ნიუტონისთვის, რომელიც საშუალებას აძლევს მომხმარებლებს შექმნან ანგარიში სერიისთვის, რესურსების, ქვიზებისა და ფორმულების შესანახად."
       />
     <div className="space-page">
-      <Header />
       <main className="mainContent authContent">
         <form className="authForm" onSubmit={handleSubmit}>
           <h1 className="authTitle">რეგისტრაცია</h1>
@@ -101,7 +100,17 @@ function RegisterPage() {
           />
 
           {error && <p className="authError">{error}</p>}
-
+          <p className="authSubtitle" style={{ marginTop: "1rem" }}>
+            რეგისტრაციის გაგრძელებით, თქვენ ეთანხმებით ჩვენს{" "}
+            <Link href="/terms" className="cardLink">
+              წესებს და პირობებს
+            </Link>{" "}
+            და{" "}
+            <Link href="/privacy" className="cardLink">
+              კონფიდენციალურობის პოლიტიკას
+            </Link>
+            .
+          </p>
           <button type="submit" className="authSubmitBtn" disabled={isSubmitting}>
             {isSubmitting ? "იტვირთება..." : "რეგისტრაცია"}
           </button>
@@ -115,20 +124,9 @@ function RegisterPage() {
           <p className="authSubtitle" style={{ marginTop: "1rem" }}>
             უკვე გაქვთ ანგარიში? <Link href="/login">შედით სისტემაში</Link>
           </p>
-          <p className="authSubtitle" style={{ marginTop: "1rem" }}>
-            რეგისტრაციის გაგრძელებით, თქვენ ეთანხმებით ჩვენს{" "}
-            <Link href="/terms" className="cardLink">
-              წესებს და პირობებს
-            </Link>{" "}
-            და{" "}
-            <Link href="/privacy" className="cardLink">
-              კონფიდენციალურობის პოლიტიკას
-            </Link>
-            .
-          </p>
+          
         </form>
       </main>
-      <Footer />
     </div>
     </>
   );

@@ -13,13 +13,15 @@ export function QuizCard({
   card,
   onChanged,
   onNext,
+  onSkip,
   onAnswered,
   timerEnabled,
   onTimerEnabledChange,
 }: {
   card: QuizData;
   onChanged?: () => void;
-  onNext: () => void;
+  onNext: (correct: boolean) => void;
+  onSkip?: () => void;
   onAnswered: (correct: boolean) => void;
   timerEnabled: boolean;
   onTimerEnabledChange: (enabled: boolean) => void;
@@ -303,6 +305,18 @@ export function QuizCard({
           </button>
         </div>
 
+        {!submitted && onSkip && (
+          <div className="quizSkipRow">
+            <button
+              type="button"
+              className="quizSkipBtn"
+              onClick={onSkip}
+            >
+              ⏭ გამოტოვება
+            </button>
+          </div>
+        )}
+
         <h2 className="quizQuestion">{card.topic}</h2>
         <p className="quizAssignmentText">
           <RichText text={card.assignment} />
@@ -398,7 +412,11 @@ export function QuizCard({
               >
                 თავიდან ცდა
               </button>
-              <button type="button" className="authSubmitBtn" onClick={onNext}>
+              <button
+                type="button"
+                className="authSubmitBtn"
+                onClick={() => onNext(isCorrect)}
+              >
                 შემდეგი →
               </button>
             </div>
