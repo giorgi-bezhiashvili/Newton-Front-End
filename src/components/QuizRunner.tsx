@@ -320,7 +320,7 @@ export function QuizRunner() {
             <div className="quizStartCard">
               <h2>მზად ხარ?</h2>
               <p>
-                {totalMatching.length} ქვიზი გელოდება — დააჭირე დაწყებას და
+                {totalMatching.length} ქვიზი გელოდება დააჭირე დაწყებას და
                 დაიწყე.
               </p>
               <button

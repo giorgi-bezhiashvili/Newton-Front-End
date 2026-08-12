@@ -1993,6 +1993,57 @@ footer {
   opacity: 0.6;
   cursor: not-allowed;
 }
+.dangerSubmitBtn {
+  background: linear-gradient(135deg, var(--danger), var(--incorrect));
+  box-shadow: 0 12px 24px -10px color-mix(in srgb, var(--danger) 70%, transparent);
+  color: var(--text);
+}
+
+.dangerSubmitBtn:hover:not(:disabled) {
+  box-shadow: 0 18px 32px -10px color-mix(in srgb, var(--danger) 85%, transparent);
+}
+
+/* Modal overlay (delete-account confirmation, etc.) */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--bg) 75%, transparent);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.modalCard {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface-solid);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 26px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modalCard h2 {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--text);
+  margin: 0;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 14px;
+  margin-top: 4px;
+}
 
 /* ==========================================================================
    Add-content forms (assignments / projects)

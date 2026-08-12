@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     icon: "/logo.png",
   },
   openGraph: {
-    title: "Newton — ფიზიკის სასწავლო პლატფორმა",
+    title: "Newton - ფიზიკის შესასწავლი პლატფორმა",
     description: "ინოვაციური პლატფორმა ფიზიკის შესასწავლად.",
     type: "website",
     url: "https://newton181.vercel.app/",

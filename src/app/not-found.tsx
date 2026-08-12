@@ -12,7 +12,7 @@ export default function NotFound() {
         fontSize: "1.5rem",
       }}
     >
-      ⚠️ 404 — გვერდი ვერ მოიძებნა
+      ⚠️ 404 - გვერდი ვერ მოიძებნა
     </div>
   );
 }

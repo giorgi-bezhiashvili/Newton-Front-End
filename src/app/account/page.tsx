@@ -8,6 +8,7 @@ import Footer from "../../components/footer";
 import { useAuth } from "../../contexts/AuthContext";
 import { useSaved } from "../../contexts/SavedContext";
 import { fetchDailyStreak } from "../../utils/streak";
+import { deleteWithAuth } from "../../api";
 
 const ROLE_LABELS: Record<string, string> = {
   teacher: "მასწავლებელი",
@@ -21,6 +22,11 @@ export default function AccountPage() {
 
   const [dailyStreak, setDailyStreak] = useState(0);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [confirmUserName, setConfirmUserName] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   useEffect(() => {
     fetchDailyStreak().then(setDailyStreak).catch(() => {});
   }, [isAuthenticated]);
@@ -28,6 +34,27 @@ export default function AccountPage() {
   const handleLogout = () => {
     logout();
     router.replace("/");
+  };
+
+  const closeDeleteModal = () => {
+    if (isDeleting) return;
+    setShowDeleteModal(false);
+    setConfirmUserName("");
+    setDeleteError(null);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (confirmUserName !== auth?.userName) return;
+    setDeleteError(null);
+    setIsDeleting(true);
+    try {
+      await deleteWithAuth("auth/user/delete");
+      logout();
+      router.replace("/");
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "ანგარიშის წაშლა ვერ მოხერხდა");
+      setIsDeleting(false);
+    }
   };
 
   if (authLoading) {
@@ -99,8 +126,61 @@ export default function AccountPage() {
               <button type="button" className="navAuthBtn" onClick={handleLogout}>
                 გასვლა
               </button>
+              <button
+                type="button"
+                className="navAuthBtn"
+                onClick={() => setShowDeleteModal(true)}
+              >
+                ანგარიშის წაშლა
+              </button>
             </div>
           </div>
+
+          {showDeleteModal && (
+            <div className="modalOverlay" onClick={closeDeleteModal}>
+              <div
+                className="modalCard"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="deleteAccountTitle"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h2 id="deleteAccountTitle">ანგარიშის წაშლა</h2>
+                <p className="accountEmptyText">
+                  ეს მოქმედება შეუქცევადია და წაშლის თქვენს ყველა მონაცემს. დასადასტურებლად ჩაწერეთ
+                  თქვენი მომხმარებლის სახელი — <strong>{auth?.userName}</strong>
+                </p>
+                <input
+                  className="authInput"
+                  type="text"
+                  value={confirmUserName}
+                  onChange={(e) => setConfirmUserName(e.target.value)}
+                  placeholder={auth?.userName}
+                  autoFocus
+                  disabled={isDeleting}
+                />
+                {deleteError && <p className="authError">{deleteError}</p>}
+                <div className="modalActions">
+                  <button
+                    type="button"
+                    className="navActionLink"
+                    onClick={closeDeleteModal}
+                    disabled={isDeleting}
+                  >
+                    გაუქმება
+                  </button>
+                  <button
+                    type="button"
+                    className="authSubmitBtn dangerSubmitBtn"
+                    onClick={handleDeleteAccount}
+                    disabled={isDeleting || confirmUserName !== auth?.userName}
+                  >
+                    {isDeleting ? "იშლება..." : "სამუდამოდ წაშლა"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="accountSectionsGrid">
             <section className="card accountSection">
