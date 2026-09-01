@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Providers } from "./providers";
 import "./globals.css";
@@ -24,10 +24,15 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    // Kept as-is from the original site (the original references
-    // og-image.png here even though the uploaded asset is og-image.jpg).
     images: ["https://newton181.vercel.app/og-image.png"],
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

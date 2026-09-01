@@ -4,6 +4,9 @@
    - Main site: Warm Dark (charcoal + amber) — DM Serif Display / Nunito
    - Resource page (.space-page): cold space-lab — Space Grotesk / Inter
    ========================================================================== */
+html, body {
+  touch-action: pan-x pan-y;
+}
 html {
   scroll-behavior: smooth;
 }
@@ -25,6 +28,9 @@ html {
   --success-bright: #7cf0a8;
   --incorrect: #ef4444;
   --incorrect-bright: #ff8484;
+  --star: #f4c95d;
+  --star-bright: #ffdb84;
+  --on-amber: #1a1408;
   --text: #f5ece0;
   --text-dim: #b8a98f;
   --text-faint: #7d715d;
@@ -88,13 +94,19 @@ html {
 
 body {
   margin: 0;
-  background: var(--bg);
+  background:
+    radial-gradient(ellipse 1000px 560px at 12% -8%, color-mix(in srgb, var(--amber) 9%, transparent), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 96% 18%, color-mix(in srgb, var(--ember) 6%, transparent), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
   color: var(--text);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
 }
+/* note: .space-page below paints its own full background (grid + constellation
+   dots), which fully covers this ambient glow wherever it's mounted */
 
 .space-page {
   min-height: 100vh;
@@ -1077,170 +1089,6 @@ img {
     font-size: 1.35rem;
   }
 
- /* ---- footer ---- */
-.footer {
-    border-top: 1px solid var(--border);
-    background: var(--bg-elevated);
-}
-
-.footerContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 20px;
-    padding: 32px 20px;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.footerBrand {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.footerCopyright {
-    font-family: "DM Serif Display", serif;
-    font-size: 15px;
-    color: var(--color-amber, #d9a441);
-}
-
-.footerTagline {
-    font-family: "Nunito", sans-serif;
-    font-size: 14px;
-    line-height: 1.5;
-    color: rgba(255, 255, 255, 0.65);
-    max-width: 480px;
-}
-
-.footerLinks {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-}
-
-.footerLink {
-    font-family: "Nunito", sans-serif;
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.85);
-    text-decoration: none;
-    transition: color 0.2s ease;
-}
-
-.footerLink:hover {
-    color: var(--color-amber, #d9a441);
-}
-
-.footerLinkDev {
-    color: rgba(255, 255, 255, 0.5);
-}
-
-/* wider screens: brand left, links right */
-@media (min-width: 640px) {
-    .footerContainer {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-    }
-    @media (min-width: 640px) {
-  .quizRunnerWrapper {
-    padding: 12px 0 40px;
-  }
-
-  .quizCard.card {
-    padding: 20px 16px 18px;
-  }
-
-  .quizQuestion {
-    font-size: 1.15rem;
-  }
-
-  .quizAssignmentText {
-    font-size: 0.95rem;
-  }
-
-  /* timer: label/bar full width on its own line, toggle button below it,
-     instead of the awkward wrap you're seeing now */
-  .quizTimerRow {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-
-  .quizTimerWrap {
-    width: 100%;
-  }
-
-  .timerToggleBtn {
-    align-self: flex-start;
-    font-size: 0.72rem;
-    padding: 5px 10px;
-  }
-
-  .quizTimerOffLabel {
-    font-size: 0.72rem;
-  }
-
-  /* multiple choice: one answer per row instead of a cramped 2-column grid */
-  .quizAnswerGrid {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .quizAnswerBtn {
-    padding: 14px 16px;
-    font-size: 0.9rem;
-  }
-
-  /* free-response box: give it visible contrast against the card background,
-     and stack input above the button instead of squeezing them side by side */
-  .quizTextAnswer {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .quizTextAnswer .searchInput {
-    background: var(--bg-elevated);
-  }
-
-  .quizTextAnswer .authSubmitBtn {
-    width: 100%;
-  }
-
-  .quizFeedback,
-  .quizExplanation {
-    font-size: 0.88rem;
-    padding: 12px 14px;
-  }
-
-  .quizPostActions {
-    flex-direction: column;
-  }
-
-  .quizPostActions .addCardToggle,
-  .quizPostActions .authSubmitBtn {
-    width: 100%;
-  }
-
-  .quizStreaksRow {
-    gap: 8px;
-  }
-
-  .streakBadge {
-    font-size: 0.75rem;
-    padding: 6px 12px;
-  }
-
-  .quizProgressLabel {
-    font-size: 0.75rem;
-  }
-  .footerContainer {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-  }
-}
-}
   /* ---- resource / space page ---- */
   .mainContent {
     padding: 24px 20px 80px;
@@ -1434,7 +1282,7 @@ img {
 .hero-text-block button {
   margin-top: 12px;
   background: linear-gradient(135deg, var(--amber), var(--ember));
-  color: #1a1408;
+  color: var(--on-amber);
   border: none;
   font-weight: 700;
   font-size: 0.95rem;
@@ -1534,44 +1382,6 @@ img {
 
 .container li::marker {
   color: var(--amber-dim);
-}
-/* ==========================================================================
-   Footer
-   ========================================================================== */
-
-footer {
-  border-top: 1px solid var(--border);
-  background: var(--bg-elevated);
-}
-
-.footerContainer {
-  max-width: 1320px;
-  margin: 0 auto;
-  padding: 32px clamp(20px, 5vw, 64px);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 24px;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.footerContainer p {
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--text-faint);
-  max-width: 60ch;
-}
-
-.footerContainer a span {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--amber);
-  white-space: nowrap;
-  transition: color 0.2s var(--ease);
-}
-
-.footerContainer a:hover span {
-  color: var(--amber-bright);
 }
 
 /* ==========================================================================
@@ -1901,98 +1711,6 @@ footer {
   border-color: var(--amber-dim);
 }
 
-.authContent {
-  display: flex;
-  justify-content: center;
-  padding-top: clamp(48px, 8vw, 96px);
-}
-
-.authCard {
-  width: 100%;
-  max-width: 420px;
-  background: var(--surface-glass);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 36px 32px;
-  box-shadow: var(--shadow-lg);
-}
-
-.authTitle {
-  font-family: var(--font-display);
-  font-size: 1.6rem;
-  color: var(--text);
-  margin-bottom: 24px;
-  text-align: center;
-}
-
-.authAlreadyIn {
-  color: var(--text-dim);
-  text-align: center;
-}
-
-.authForm {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.authLabel {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--text-dim);
-}
-
-.authInput {
-  width: 100%;
-  background: var(--surface-solid);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-family: var(--font-body);
-  font-size: 1rem;
-  padding: 12px 16px;
-  border-radius: var(--radius-sm);
-  transition: border-color 0.25s var(--ease), box-shadow 0.25s var(--ease);
-}
-
-.authInput:focus {
-  border-color: var(--amber-dim);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--amber) 16%, transparent);
-  outline: none;
-}
-
-.authError {
-  color: var(--ember);
-  font-size: 0.88rem;
-  font-weight: 600;
-}
-
-.authSubmitBtn {
-  margin-top: 4px;
-  background: linear-gradient(135deg, var(--amber), var(--ember));
-  color: #1a1408;
-  border: none;
-  font-weight: 700;
-  font-size: 0.95rem;
-  padding: 13px 24px;
-  border-radius: 999px;
-  box-shadow: 0 12px 24px -10px color-mix(in srgb, var(--amber) 70%, transparent);
-  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), opacity 0.25s var(--ease);
-}
-
-.authSubmitBtn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 32px -10px color-mix(in srgb, var(--amber) 85%, transparent);
-}
-
-.authSubmitBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
 .dangerSubmitBtn {
   background: linear-gradient(135deg, var(--danger), var(--incorrect));
   box-shadow: 0 12px 24px -10px color-mix(in srgb, var(--danger) 70%, transparent);
@@ -2208,10 +1926,6 @@ footer {
   .quizProgressLabel {
     font-size: 0.75rem;
   }
-  .authCard {
-    padding: 28px 22px;
-  }
-
   .addForm {
     padding: 18px;
   }
@@ -2283,12 +1997,14 @@ footer {
   font-family: var(--font-display);
   font-size: 1.8rem;
   margin-bottom: 4px;
+  text-align: center;
 }
 
 .authSubtitle {
   color: var(--text-dim);
   font-size: 0.9rem;
   margin-bottom: 20px;
+  text-align: center;
 }
 
 .authLabel {
@@ -2309,19 +2025,20 @@ footer {
 
 .authSubmitBtn {
   margin-top: 22px;
-  background: var(--amber);
-  color: var(--bg);
+  background: linear-gradient(135deg, var(--amber), var(--ember));
+  color: var(--on-amber);
   font-weight: 700;
   font-size: 0.95rem;
   border: none;
   padding: 14px 20px;
-  border-radius: var(--radius-sm);
-  transition: background 0.25s var(--ease), transform 0.2s var(--ease);
+  border-radius: 999px;
+  box-shadow: 0 12px 24px -10px color-mix(in srgb, var(--amber) 70%, transparent);
+  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), opacity 0.25s var(--ease);
 }
 
-.authSubmitBtn:hover {
-  background: var(--amber-bright);
-  transform: translateY(-1px);
+.authSubmitBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 32px -10px color-mix(in srgb, var(--amber) 85%, transparent);
 }
 
 .authSubmitBtn:disabled {
@@ -2412,14 +2129,15 @@ footer {
 
 .cardStarBtn:hover {
   transform: scale(1.12);
-  border-color: #ffd64d;
-  color: #ffd64d;
+  border-color: var(--star);
+  color: var(--star);
 }
 
 .cardStarBtn.saved {
-  border-color: #ffd64d;
-  background: color-mix(in srgb, #ffd64d 18%, var(--surface-solid));
-  color: #ffd64d;
+  border-color: var(--star);
+  background: color-mix(in srgb, var(--star) 18%, var(--surface-solid));
+  color: var(--star);
+  box-shadow: 0 0 16px -6px color-mix(in srgb, var(--star) 55%, transparent);
 }
 
 .cardStarBtn.saved:hover {
@@ -2457,7 +2175,7 @@ footer {
 }
 
 .navStarIcon {
-  color: #ffd64d;
+  color: var(--star);
 }
 .doneToggleRow {
   display: flex;
@@ -2494,9 +2212,9 @@ footer {
   font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.04em;
-  color: #2fbf71;
-  background: color-mix(in srgb, #2fbf71 16%, transparent);
-  border: 1px solid color-mix(in srgb, #2fbf71 32%, transparent);
+  color: var(--success-bright);
+  background: color-mix(in srgb, var(--success) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success) 32%, transparent);
   padding: 6px 14px;
   border-radius: 999px;
   white-space: nowrap;
@@ -2504,34 +2222,37 @@ footer {
 .quizToggleWrap {
   display: flex;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   margin-bottom: 16px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-solid);
+  border: 1px solid var(--border);
   padding: 4px;
-  border-radius: 12px;
+  border-radius: 999px;
 }
 
 .quizToggleBtn {
   flex: 1;
   padding: 10px 16px;
   border: none;
-  border-radius: 8px;
+  border-radius: 999px;
   background: transparent;
-  color: #a0aec0;
-  font-weight: 600;
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.25s var(--ease), color 0.25s var(--ease), box-shadow 0.25s var(--ease);
 }
 
 .quizToggleBtn.active {
-  background: #3182ce;
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(49, 130, 206, 0.3);
+  background: linear-gradient(135deg, var(--amber), var(--ember));
+  color: var(--on-amber);
+  box-shadow: 0 8px 20px -8px color-mix(in srgb, var(--amber) 60%, transparent);
 }
 
 .quizToggleBtn:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  background: var(--bg-elevated);
+  color: var(--text);
 }
 .navUserBtn {
   display: inline-flex;
@@ -2590,43 +2311,22 @@ footer {
   list-style: none;
 }
 
-/* Round User Account Button */
-.navUserBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 1px solid rgba(226, 217, 205, 0.3);
-  color: #e2d9cd;
-  text-decoration: none;
-  background: transparent;
-  transition: all 0.2s ease;
-}
-
-.navUserBtn:hover {
-  border-color: #d1a853;
-  color: #ffffff;
-  background-color: rgba(209, 168, 83, 0.1);
-}
-
 /* Saved Link Text Style */
 .savedActionLink {
-  color: #e2d9cd;
-  font-size: 15px;
-  font-weight: 500;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  font-weight: 700;
   text-decoration: none;
   background: none;
   border: none;
   padding: 6px 4px;
   cursor: pointer;
-  transition: color 0.2s ease;
-  margin-right:12px;
+  transition: color 0.2s var(--ease);
+  margin-right: 12px;
 }
 
 .savedActionLink:hover {
-  color: #ffffff;
+  color: var(--amber-bright);
 }
 
 .quizLayout {
@@ -2809,7 +2509,7 @@ footer {
   background: var(--surface-solid);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
 }
 

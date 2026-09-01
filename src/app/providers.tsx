@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { AuthProvider } from "../contexts/AuthContext";
 import { SavedProvider } from "../contexts/SavedContext";
+import { DisablePinchZoom } from "../components/DisablePinchZoom";
 
 function ScrollToTop() {
   const pathname = usePathname();
@@ -21,6 +22,7 @@ export function Providers({ children }: { children: ReactNode }) {
     <AuthProvider>
       <SavedProvider>
         <ScrollToTop />
+        <DisablePinchZoom />
         {children}
       </SavedProvider>
     </AuthProvider>

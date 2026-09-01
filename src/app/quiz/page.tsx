@@ -7,7 +7,7 @@ import { QuizRunner } from "../../components/QuizRunner";
 export default function QuizPage() {
   return (
     <>
-      <title>ქვიზები — Newton</title>
+      <title>ქვიზები - Newton</title>
       <meta name="description" content="ფიზიკის ინტერაქტიული ქვიზები მყისიერი პასუხებით და ახსნებით" />
 
       <div className="space-page">
