@@ -136,18 +136,25 @@ let refreshInFlight: Promise<RefreshResponse> | null = null;
 async function refreshSession(): Promise<RefreshResponse> {
   if (!refreshInFlight) {
     refreshInFlight = (async () => {
-      const response = await apiFetch("auth/token", { method: "POST" });
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const response = await apiFetch("auth/token", { method: "POST" });
 
-      if (!response.ok) {
-        throw new Error("სესია ამოიწურა, გთხოვთ თავიდან შეხვიდეთ სისტემაში");
+        if (response.status === 429) {
+          // another tab/request is rotating the token; cookies update shortly
+          await new Promise((r) => setTimeout(r, 500));
+          continue;
+        }
+
+        if (!response.ok) {
+          throw new Error("სესია ამოიწურა, გთხოვთ თავიდან შეხვიდეთ სისტემაში");
+        }
+        return response.json();
       }
-
-      return response.json();
+      throw new Error("სესია ამოიწურა, გთხოვთ თავიდან შეხვიდეთ სისტემაში");
     })().finally(() => {
       refreshInFlight = null;
     });
   }
-
   return refreshInFlight;
 }
 
