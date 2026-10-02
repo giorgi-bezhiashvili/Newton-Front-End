@@ -8,8 +8,11 @@ export const metadata: Metadata = {
   description: "ინოვაციური პლატფორმა ფიზიკის შესასწავლად.",
   icons: {
     icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
   },
   openGraph: {
+    siteName: "Newton",
     title: "Newton - ფიზიკის შესასწავლი პლატფორმა",
     description: "ინოვაციური პლატფორმა ფიზიკის შესასწავლად.",
     type: "website",
@@ -24,7 +27,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    images: ["https://newton181.vercel.app/og-image.png"],
+    images: ["https://newton181.vercel.app/og-image.jpg"], // Matched with your og-image file type
   },
 };
 
