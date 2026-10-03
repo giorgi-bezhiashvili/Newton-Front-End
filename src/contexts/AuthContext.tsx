@@ -6,6 +6,7 @@ import {
   logoutRequest,
   registerRequest,
   tryRestoreSession,
+  setSessionHint,
   type RegisterBody,
 } from "../api";
 
@@ -56,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [login]);
 
   const setUser = useCallback((userName: string, role: string) => {
+    setSessionHint(); // Google login lands here
     setAuth({ userName, role });
   }, []);
 

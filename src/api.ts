@@ -31,6 +31,40 @@ function getCsrfToken(): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
+// The refresh cookie is httpOnly, so JS can't tell whether a session exists.
+// Without a hint, every anonymous page load fires POST /auth/token and the
+// browser logs a red 401 in the console. We keep a small non-secret flag
+// (set on login / refresh success, cleared on logout / refresh failure) and
+// also accept the readable csrfToken cookie as a hint, so users who were
+// already logged in before this change are not signed out.
+const SESSION_HINT_KEY = "newton_has_session";
+
+export function setSessionHint(): void {
+  try {
+    localStorage.setItem(SESSION_HINT_KEY, "1");
+  } catch {
+    // storage blocked — hint just won't persist
+  }
+}
+
+export function clearSessionHint(): void {
+  try {
+    localStorage.removeItem(SESSION_HINT_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+function hasSessionHint(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    if (localStorage.getItem(SESSION_HINT_KEY) === "1") return true;
+  } catch {
+    // ignore
+  }
+  return getCsrfToken() !== null;
+}
+
 async function apiFetch(endpoint: string, options: RequestInit = {}): Promise<Response> {
   const method = (options.method ?? "GET").toUpperCase();
   const headers = new Headers(options.headers);
@@ -66,6 +100,7 @@ export async function loginRequest(
     throw new Error("შესვლა ვერ მოხერხდა, სცადეთ თავიდან");
   }
 
+  setSessionHint();
   return response.json();
 }
 
@@ -128,6 +163,8 @@ export async function logoutRequest(): Promise<void> {
     await apiFetch("auth/logout", { method: "DELETE" });
   } catch {
     // best-effort — local logout still proceeds even if this fails
+  } finally {
+    clearSessionHint();
   }
 }
 
@@ -146,8 +183,10 @@ async function refreshSession(): Promise<RefreshResponse> {
         }
 
         if (!response.ok) {
+          clearSessionHint();
           throw new Error("სესია ამოიწურა, გთხოვთ თავიდან შეხვიდეთ სისტემაში");
         }
+        setSessionHint();
         return response.json();
       }
       throw new Error("სესია ამოიწურა, გთხოვთ თავიდან შეხვიდეთ სისტემაში");
@@ -159,6 +198,8 @@ async function refreshSession(): Promise<RefreshResponse> {
 }
 
 export async function tryRestoreSession(): Promise<RefreshResponse | null> {
+  // No sign of a previous login -> skip the network call (and the 401).
+  if (!hasSessionHint()) return null;
   try {
     return await refreshSession();
   } catch {
